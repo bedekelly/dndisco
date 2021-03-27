@@ -1,8 +1,8 @@
 import { useAudioContext } from "./AudioContextProvider";
-import {useCallback, useMemo, useRef, useState} from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import decodeAudioFile from "./decodeAudioFile";
 import { v4 as uuid } from "uuid";
-import {EventData, InitialLoadPayload} from "../network/useSockets";
+import { EventData, InitialLoadPayload } from "../network/useSockets";
 const GUEST_DELAY_TIME = 0;
 
 function createPanner(context: AudioContext, pan: number) {
@@ -19,13 +19,19 @@ function createPanner(context: AudioContext, pan: number) {
 }
 
 type BufferLoadedInfo = {
-  encodedData: ArrayBuffer,
-  soundID: string,
-  fileName: string
-}
+  encodedData: ArrayBuffer;
+  soundID: string;
+  fileName: string;
+};
 
-export function loadInitialBuffers(event: EventData, loadBuffer: (id: string, buffer: ArrayBuffer) => Promise<undefined | AudioBuffer>) {
-  const {files} = event.payload as InitialLoadPayload;
+export function loadInitialBuffers(
+  event: EventData,
+  loadBuffer: (
+    id: string,
+    buffer: ArrayBuffer
+  ) => Promise<undefined | AudioBuffer>
+) {
+  const { files } = event.payload as InitialLoadPayload;
   const loadFiles = Object.entries(files).map(([id, data]) =>
     loadBuffer(id, data).then(() => id)
   );
@@ -35,7 +41,6 @@ export function loadInitialBuffers(event: EventData, loadBuffer: (id: string, bu
 function useVisualisedDestination(hostOrGuest: "host" | "guest") {
   const { context } = useAudioContext();
   const analyserRef = useRef<AnalyserNode | null>(null);
-
 
   const destination = useMemo(() => {
     if (!context) return;
@@ -63,13 +68,17 @@ function useVisualisedDestination(hostOrGuest: "host" | "guest") {
   return { destination, getVisualizerData };
 }
 
-export function useBuffers(hostOrGuest: 'host' | 'guest') {
+export function useBuffers(hostOrGuest: "host" | "guest") {
   const { unlock, context } = useAudioContext();
   const [buffers, setBuffers] = useState<Record<string, AudioBuffer>>({});
   const bufferSources = useRef<Record<string, AudioBufferSourceNode>>({});
-  const { destination, getVisualizerData } = useVisualisedDestination(hostOrGuest);
+  const { destination, getVisualizerData } = useVisualisedDestination(
+    hostOrGuest
+  );
 
-  async function loadBufferFromFile(soundFile: File): Promise<BufferLoadedInfo> {
+  async function loadBufferFromFile(
+    soundFile: File
+  ): Promise<BufferLoadedInfo> {
     const { encodedData, decodedData } = await decodeAudioFile(
       context,
       soundFile
@@ -80,12 +89,15 @@ export function useBuffers(hostOrGuest: 'host' | 'guest') {
     return { encodedData, soundID, fileName };
   }
 
-  const loadBuffer = useCallback(async (id: string, buffer: ArrayBuffer) => {
-    if (!context || buffer.byteLength === 0) return;
-    return context.decodeAudioData(buffer, (decodedData: AudioBuffer) => {
-      setBuffers((buffers) => ({ ...buffers, [id]: decodedData }));
-    });
-  }, [context]);
+  const loadBuffer = useCallback(
+    async (id: string, buffer: ArrayBuffer) => {
+      if (!context || buffer.byteLength === 0) return;
+      return context.decodeAudioData(buffer, (decodedData: AudioBuffer) => {
+        setBuffers((buffers) => ({ ...buffers, [id]: decodedData }));
+      });
+    },
+    [context]
+  );
 
   async function playBuffer(soundID: string) {
     if (!context || !unlock || !destination) return;
@@ -109,5 +121,13 @@ export function useBuffers(hostOrGuest: 'host' | 'guest') {
     Object.keys(bufferSources.current).forEach(stopBuffer);
   }, [stopBuffer]);
 
-  return { loadBuffer, stopBuffer, getVisualizerData, getLoadedSounds, loadBufferFromFile, playBuffer, stopAll };
+  return {
+    loadBuffer,
+    stopBuffer,
+    getVisualizerData,
+    getLoadedSounds,
+    loadBufferFromFile,
+    playBuffer,
+    stopAll,
+  };
 }

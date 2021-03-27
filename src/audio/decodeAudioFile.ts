@@ -1,9 +1,12 @@
 type DecodingInfo = {
-  encodedData: ArrayBuffer,
-  decodedData: AudioBuffer
-}
+  encodedData: ArrayBuffer;
+  decodedData: AudioBuffer;
+};
 
-export default async function decodeAudioFile(context: AudioContext, newSoundFile: File): Promise<DecodingInfo> {
+export default async function decodeAudioFile(
+  context: AudioContext,
+  newSoundFile: File
+): Promise<DecodingInfo> {
   const reader = new FileReader();
   return new Promise((resolve) => {
     reader.onload = (event: ProgressEvent<FileReader>) => {

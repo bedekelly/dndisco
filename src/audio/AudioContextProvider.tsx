@@ -2,23 +2,27 @@ import React, { createContext, useContext, useRef, useState } from "react";
 import unlock from "./unlockAudioContext";
 
 type AudioContextInfo = {
-  unlock: () => void,
-  context: AudioContext,
-  running: boolean,
+  unlock: () => void;
+  context: AudioContext;
+  running: boolean;
   buffers: {
-    [id: string]: AudioBuffer
-  }
-}
+    [id: string]: AudioBuffer;
+  };
+};
 
 const AudioContextContext = createContext<AudioContextInfo>(null!);
 
 declare global {
   interface window {
-    webkitAudioContext: typeof AudioContext
+    webkitAudioContext: typeof AudioContext;
   }
 }
 
-export default function AudioContextProvider({ children }: { children : React.ReactNode}) {
+export default function AudioContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const audioContext = useRef<AudioContext>(
     // @ts-ignore: TypeScript doesn't know about Safari :/
     new (window.AudioContext || window.webkitAudioContext)()

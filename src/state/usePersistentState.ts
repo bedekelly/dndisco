@@ -1,6 +1,15 @@
-import {Dispatch, SetStateAction, useCallback, useEffect, useState} from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
-export default function usePersistentState<T>(key: string, defaultValue: T): [T, Dispatch<SetStateAction<T>>, () => void] {
+export default function usePersistentState<T>(
+  key: string,
+  defaultValue: T
+): [T, Dispatch<SetStateAction<T>>, () => void] {
   const [value, setValue] = useState<T>(defaultValue);
 
   /**

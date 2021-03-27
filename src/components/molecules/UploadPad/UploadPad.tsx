@@ -3,12 +3,16 @@ import { useDropzone } from "react-dropzone";
 import React, { useState } from "react";
 
 type UploadPadProps = {
-  play: () => void,
-  onLoadFile: (file: File) => void,
-  fileName: string | null
-}
+  play: () => void;
+  onLoadFile: (file: File) => void;
+  fileName: string | null;
+};
 
-export default function UploadPad({ play, onLoadFile, fileName }: UploadPadProps) {
+export default function UploadPad({
+  play,
+  onLoadFile,
+  fileName,
+}: UploadPadProps) {
   const [draggingOverPad, setDraggingOverPad] = useState(false);
   const {
     getRootProps,
@@ -39,7 +43,9 @@ export default function UploadPad({ play, onLoadFile, fileName }: UploadPadProps
         <p className={styles.padName}>{fileName}</p>
       </button>
       <button
-        {...getRootProps({ /* isDragActive: draggingOverInput*/ })}
+        {...getRootProps({
+          /* isDragActive: draggingOverInput*/
+        })}
         className={`${styles.uploadSound} ${fullSizeInput}`}
       >
         <input {...getInputProps()} />

@@ -1,11 +1,10 @@
 import { useCallback, useRef } from "react";
 import { v4 as uuid } from "uuid";
 
-type Callback = (event: any) => void
+type Callback = (event: any) => void;
 type Listeners = {
-  [id: string]: Callback
-}
-
+  [id: string]: Callback;
+};
 
 export default function useSubject() {
   const listeners = useRef<Listeners>({});

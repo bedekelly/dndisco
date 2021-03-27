@@ -4,7 +4,6 @@ import ScreenCenter from "../../atoms/ScreenCenter";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
 import useNetworkSound from "../../../network/useNetworkSound";
 
-
 export default function GuestUI() {
   const { unlock, running, getVisualizerData } = useNetworkSound();
   return (
