@@ -10,7 +10,7 @@ type AudioContextInfo = {
   }
 }
 
-const AudioContextContext = createContext<AudioContextInfo | null>(null);
+const AudioContextContext = createContext<AudioContextInfo>(null!);
 
 declare global {
   interface window {
@@ -19,7 +19,7 @@ declare global {
 }
 
 export default function AudioContextProvider({ children }: { children : React.ReactNode}) {
-  const audioContext = useRef(
+  const audioContext = useRef<AudioContext>(
     // @ts-ignore: TypeScript doesn't know about Safari :/
     new (window.AudioContext || window.webkitAudioContext)()
   );
@@ -47,5 +47,5 @@ export default function AudioContextProvider({ children }: { children : React.Re
 }
 
 export function useAudioContext() {
-  return useContext<AudioContextInfo | null>(AudioContextContext);
+  return useContext<AudioContextInfo>(AudioContextContext);
 }

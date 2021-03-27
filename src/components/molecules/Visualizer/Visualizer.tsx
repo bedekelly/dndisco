@@ -55,12 +55,13 @@ type VisualizerProps = {
 
 export default function Visualizer({getData}: VisualizerProps) {
   const [smooth] = useState(true);
+  const dataRef = useRef<Uint8Array | undefined>();
   const {canvasRef, context, width, height} = useCanvas();
   const lastTime = useRef(0);
 
   useAnimationFrame(() => {
     if (!context) return;
-    const data = getData();
+    const data = dataRef.current = getData(dataRef.current);
     if (smooth || performance.now() - 100 > lastTime.current) {
       lastTime.current = performance.now();
       context.clearRect(0, 0, width, height);

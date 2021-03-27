@@ -17,11 +17,6 @@ export default function useSubject() {
   }, []);
 
   const send = useCallback((value) => {
-    console.log(
-      `Sending value ${value} to ${
-        Object.values(listeners.current).length
-      } listeners`
-    );
     for (let listener of Object.values(listeners.current)) {
       listener(value);
     }

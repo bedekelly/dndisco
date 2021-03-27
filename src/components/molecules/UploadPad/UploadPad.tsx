@@ -39,7 +39,7 @@ export default function UploadPad({ play, onLoadFile, fileName }: UploadPadProps
         <p className={styles.padName}>{fileName}</p>
       </button>
       <button
-        {...getRootProps({ isDragActive: draggingOverInput })}
+        {...getRootProps({ /* isDragActive: draggingOverInput*/ })}
         className={`${styles.uploadSound} ${fullSizeInput}`}
       >
         <input {...getInputProps()} />
