@@ -19,8 +19,6 @@ export default function usePersistentState<T>(
     let sessionStorageItem = sessionStorage.getItem(key);
     if (sessionStorageItem == null) return;
     const loadedValue = JSON.parse(sessionStorageItem) as T;
-
-    // Deserialise these dates from JSON as our date picker doesn't like ISO timestamps.
     if (loadedValue !== null) setValue(loadedValue);
   }, [key]);
 

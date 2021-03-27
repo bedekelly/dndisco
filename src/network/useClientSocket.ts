@@ -1,9 +1,9 @@
 import useSubject from "../events/useSubject";
 import { useCallback, useEffect } from "react";
 import { EventData, useSocket } from "./useSockets";
-import Socket = SocketIOClient.Socket;
+import { Socket } from "socket.io-client";
 
-function useBroadcastMessage(socket: Socket) {
+function useBroadcastMessage(socket: typeof Socket) {
   return useCallback(
     (name, message) => {
       socket.emit(name, message);

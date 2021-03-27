@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EventData, InitialLoadPayload, useSocket } from "./useSockets";
-import Socket = SocketIOClient.Socket;
+import { Socket } from "socket.io-client";
 
 type OnInitialLoad = (event: { payload: InitialLoadPayload }) => void;
 
@@ -17,7 +17,7 @@ function useSyncState() {
   return [synced, setSynced, setSyncing] as const;
 }
 
-function useSync(socket: Socket) {
+function useSync(socket: typeof Socket) {
   const [synced, setSynced, setSyncing] = useSyncState();
   const [numberClients, setNumberClients] = useState(0);
   useEffect(() => {
@@ -36,7 +36,7 @@ function useSync(socket: Socket) {
   return [synced, setSyncing, numberClients] as const;
 }
 
-function useSocketLoad(socket: Socket, onInitialLoad: OnInitialLoad) {
+function useSocketLoad(socket: typeof Socket, onInitialLoad: OnInitialLoad) {
   const onInitialLoadRef = useRef<OnInitialLoad>();
   onInitialLoadRef.current = onInitialLoad;
   useEffect(() => {
@@ -47,7 +47,7 @@ function useSocketLoad(socket: Socket, onInitialLoad: OnInitialLoad) {
   }, [socket]);
 }
 
-function useBroadcastEvent(socket: Socket) {
+function useBroadcastEvent(socket: typeof Socket) {
   return useCallback(
     (event: EventData & { type: string }) => {
       socket.emit(event.type, event);
