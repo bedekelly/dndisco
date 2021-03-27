@@ -9,9 +9,7 @@ export default function GuestUI() {
   return (
     <>
       <ScreenCenter>
-        {!running && (
-          <button onClick={unlock}>Click me to unlock audio</button>
-        )}
+        {!running && <button onClick={unlock}>Click me to unlock audio</button>}
         {running && <Visualizer getData={getVisualizerData} />}
       </ScreenCenter>
     </>

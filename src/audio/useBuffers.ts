@@ -69,7 +69,10 @@ function useVisualisedDestination(hostOrGuest: "host" | "guest") {
 }
 
 export type Buffers = {
-  loadBuffer: (id: string, buffer: ArrayBuffer) => Promise<AudioBuffer | undefined>;
+  loadBuffer: (
+    id: string,
+    buffer: ArrayBuffer
+  ) => Promise<AudioBuffer | undefined>;
   stopBuffer: (id: string) => void;
   getVisualizerData: () => Uint8Array;
   getLoadedSounds: () => string[];
@@ -77,7 +80,6 @@ export type Buffers = {
   playBuffer: (soundID: string) => Promise<void>;
   stopAll: () => void;
 };
-
 
 export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
   const { unlock, context } = useAudioContext();
