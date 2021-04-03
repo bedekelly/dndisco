@@ -3,7 +3,7 @@ import socketIO from "socket.io-client";
 
 type Socket = SocketIOClient.Socket;
 
-export const SOCKET_SERVER_URL = "https://7793d50af454.ngrok.io";
+export const SOCKET_SERVER_URL = "https://05a263a601cc.ngrok.io";
 
 export type LoadPayload = {
   soundID: string;
@@ -28,16 +28,8 @@ interface SocketWithOnAny extends Socket {
   onAny(listener: (event: any) => void): void;
 }
 
-export function useSocket() {
-  const socketRef = useRef(
-    (socketIO(SOCKET_SERVER_URL) as unknown) as SocketWithOnAny
-  );
+const socket = (socketIO(SOCKET_SERVER_URL) as unknown) as SocketWithOnAny;
 
-  useEffect(() => {
-    const socket = socketRef.current;
-    return () => {
-      socket.close();
-    };
-  }, []);
-  return socketRef.current;
+export function useSocket() {
+  return socket;
 }

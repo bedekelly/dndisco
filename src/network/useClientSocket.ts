@@ -1,5 +1,5 @@
 import useSubject from "../events/useSubject";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { EventData, useSocket } from "./useSockets";
 import { Socket } from "socket.io-client";
 
@@ -14,10 +14,20 @@ function useBroadcastMessage(socket: typeof Socket) {
 
 export default function useClientSocket() {
   const socket = useSocket();
+  const [connected, setConnected] = useState(false);
   const { send, subscribe, unsubscribe } = useSubject();
   useEffect(() => {
-    socket.onAny((event: EventData, ...args: any[]) => send([event, ...args]));
+    socket.on("connect", () => {
+      setConnected(true);
+    });
+    socket.on("disconnect", () => {
+      setConnected(false);
+    });
+    socket.onAny((event: EventData, ...args: any[]) => {
+      setConnected(socket.connected);
+      send([event, ...args]);
+    });
   }, [send, socket]);
   const sendMessage = useBroadcastMessage(socket);
-  return { subscribe, unsubscribe, sendMessage };
+  return { subscribe, unsubscribe, connected, sendMessage };
 }

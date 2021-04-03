@@ -19,21 +19,30 @@ function useSyncState() {
 
 function useSync(socket: typeof Socket) {
   const [synced, setSynced, setSyncing] = useSyncState();
+  const [connected, setConnected] = useState(false);
   const [numberClients, setNumberClients] = useState(0);
   useEffect(() => {
+    socket.on("disconnect", () => {
+      setConnected(false);
+    });
+
     // Send host hello on every connection and reconnection.
     socket.on("connect", () => {
+      console.log("on connect, setting connected to true");
+      setConnected(true);
+      setSynced(false);
       socket.emit("HI_IM_THE_HOST");
     });
 
     // Log out sync messages.
     socket.on("SYNC", (msg: SyncMessage) => {
+      console.log("on sync");
       setSynced(msg.filesSynced);
       setNumberClients(msg.numClients);
     });
   }, [setNumberClients, setSynced, socket]);
 
-  return [synced, setSyncing, numberClients] as const;
+  return [connected, synced, setSyncing, numberClients] as const;
 }
 
 function useSocketLoad(socket: typeof Socket, onInitialLoad: OnInitialLoad) {
@@ -58,9 +67,9 @@ function useBroadcastEvent(socket: typeof Socket) {
 
 export default function useHostSocket(onInitialLoad: OnInitialLoad) {
   const socket = useSocket();
-  const [synced, setSyncing, numberClients] = useSync(socket);
+  const [connected, synced, setSyncing, numberClients] = useSync(socket);
   useSocketLoad(socket, onInitialLoad);
   const broadcastEvent = useBroadcastEvent(socket);
 
-  return { broadcastEvent, synced, numberClients, setSyncing };
+  return { broadcastEvent, synced, connected, numberClients, setSyncing };
 }

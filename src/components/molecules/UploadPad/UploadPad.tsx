@@ -4,12 +4,14 @@ import React, { useState } from "react";
 
 type UploadPadProps = {
   play: () => void;
+  stop: () => void;
   onLoadFile: (file: File) => void;
   fileName: string | null;
 };
 
 export default function UploadPad({
   play,
+  stop,
   onLoadFile,
   fileName,
 }: UploadPadProps) {
@@ -42,6 +44,9 @@ export default function UploadPad({
       >
         <p className={styles.padName}>{fileName}</p>
       </button>
+      <button className={styles.stop} aria-label="stop" onClick={stop}>
+        <i className="block bg-white w-2.5 h-2.5 rounded-sm text-center" />
+      </button>
       <button
         {...getRootProps({
           /* isDragActive: draggingOverInput*/
@@ -57,7 +62,7 @@ export default function UploadPad({
 
 const styles = {
   pad:
-    "w-44 h-44 rounded-2xl bg-gray-200 flex justify-center items-center transition-all duration-100 shadow-md cursor-pointer flex-col relative select-none",
+    "w-44 h-44 m-4 rounded-2xl bg-gray-200 flex justify-center items-center transition-all duration-100 shadow-md cursor-pointer flex-col relative select-none",
   playSound:
     "w-full h-5/6 bg-gradient-to-br from-blue-700 to-purple-800 rounded-t-2xl overflow-hidden absolute top-0 focus:outline-black",
   padName:
@@ -65,4 +70,6 @@ const styles = {
   uploadSound: "absolute bottom-0.5 border-0 focus:outline-black",
   fullHeight:
     "full-height w-full h-full rounded-2xl bg-gradient-to-br from-blue-700 to-purple-800 font-bold text-lg text-pink-50",
+  stop:
+    "bg-red-400 rounded-br-2xl rounded-tl-2xl absolute top-0 left-0 w-7 h-7 flex justify-center items-center",
 };

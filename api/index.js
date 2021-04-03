@@ -35,8 +35,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("HI_IM_THE_HOST", () => {
+    if (session.hostID !== socket.id) {
+      console.log(`Host has changed (${session.hostID} => ${socket.id})`);
+    }
     session.hostID = socket.id;
     updateHost();
+  });
+
+  socket.on("PRE_LOAD", () => {
+    socket.broadcast.emit("PRE_LOAD");
   });
 
   socket.on("LOAD", (message) => {
@@ -48,6 +55,12 @@ io.on("connection", (socket) => {
   socket.on("STOP", (event) => {
     console.log("Got STOP event:", event);
     socket.broadcast.emit("STOP", event);
+  });
+
+  socket.on("DELETE", (event) => {
+    console.log("Deleting files...");
+    delete session.files[event.payload.soundID];
+    socket.broadcast.emit("DELETE", event);
   });
 
   socket.on("PLAY", (event) => {
@@ -80,15 +93,21 @@ const isSubsetOf = (arr1, arr2) => {
 };
 
 function updateHost() {
-  console.log("Host is:", session.hostID);
+  if (!session.hostID) {
+    console.warn("Host ID not yet present.");
+    return;
+  }
+  console.log("Updating host:", session.hostID);
   const clients = Object.entries(session.clients);
-  const sessionFiles = Object.keys(session.files);
+  const sessionFiles = Object.keys(getSessionFiles());
   const filesSynced = clients.every(
     ([clientID, client]) =>
       clientID === session.hostID || isSubsetOf(sessionFiles, client.files)
   );
+  const numClients = clients.filter(([clientID]) => clientID !== session.hostID)
+    .length;
   io.to(session.hostID).emit("SYNC", {
-    numClients: clients.length - 1,
+    numClients,
     filesSynced,
   });
 }

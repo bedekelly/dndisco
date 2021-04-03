@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import produce from "immer";
 
 import ScreenCenter from "../../atoms/ScreenCenter";
@@ -6,10 +6,18 @@ import UploadPad from "../../molecules/UploadPad/UploadPad";
 import useHostSocket from "../../../network/useHostSocket";
 import { loadInitialBuffers, useBuffers } from "../../../audio/useBuffers";
 import usePersistentState from "../../../state/usePersistentState";
-import SyncIndicator from "../../atoms/SyncIndicator";
+import NetworkIndicator from "../../atoms/NetworkIndicator";
 import StopEverything from "../../atoms/StopEverything";
 import { EventData } from "../../../network/useSockets";
-import { LOAD, PLAY, STOP, STOP_ALL } from "../../../network/events";
+import {
+  LOAD,
+  PLAY,
+  DELETE,
+  STOP_ALL,
+  PRE_LOAD,
+  STOP,
+} from "../../../network/events";
+import Visualizer from "../../molecules/Visualizer/Visualizer";
 
 type Pad = {
   soundID: string;
@@ -21,7 +29,7 @@ const makePad = () =>
     soundID: "",
     fileName: "",
   } as Pad);
-const initialPads: Pad[] = [makePad()];
+const initialPads: Pad[] = [makePad(), makePad()];
 
 /**
  * For each pad, check if we've still got its buffer.
@@ -47,6 +55,7 @@ function useHostUI() {
     playBuffer,
     stopAll,
     stopBuffer,
+    getVisualizerData,
   } = useBuffers("host");
 
   /**
@@ -64,7 +73,13 @@ function useHostUI() {
   );
 
   const server = useHostSocket(onInitialLoad);
-  const { broadcastEvent, synced, setSyncing, numberClients } = server;
+  const {
+    broadcastEvent,
+    synced,
+    connected,
+    setSyncing,
+    numberClients,
+  } = server;
 
   /**
    * When we drag-and-drop a file:
@@ -75,12 +90,18 @@ function useHostUI() {
    * 5. Broadcast a LOAD event with the encoded data.
    * 6. Display the new filename on the pad.
    */
+  const [decoding, setDecoding] = useState(false);
   async function fileLoaded(index: number, soundFile: File) {
+    setDecoding(true);
     setSyncing();
+    broadcastEvent(PRE_LOAD());
     const oldID = pads[index].soundID;
-    stopBuffer(oldID);
-    broadcastEvent(STOP(oldID));
+    if (oldID) {
+      stopBuffer(oldID);
+      broadcastEvent(DELETE(oldID));
+    }
     const loadedBuffer = await loadBufferFromFile(soundFile);
+    setDecoding(false);
     const { encodedData, soundID, fileName } = loadedBuffer;
     broadcastEvent(LOAD(soundID, encodedData));
     setPads(
@@ -96,32 +117,60 @@ function useHostUI() {
     return playBuffer(soundID);
   }
 
+  async function stopPad(soundID: string) {
+    if (!synced) return;
+    broadcastEvent(STOP(soundID));
+    return stopBuffer(soundID);
+  }
+
   async function stopEverything() {
     broadcastEvent(STOP_ALL());
     return stopAll();
   }
 
-  return { pads, synced, numberClients, fileLoaded, playPad, stopEverything };
+  return {
+    pads,
+    decoding,
+    synced,
+    connected,
+    numberClients,
+    fileLoaded,
+    playPad,
+    stopPad,
+    stopEverything,
+    getVisualizerData,
+  };
 }
 
 export default function HostUI() {
   const {
     pads,
     synced,
+    connected,
+    decoding,
     numberClients,
     fileLoaded,
     playPad,
+    stopPad,
     stopEverything,
+    getVisualizerData,
   } = useHostUI();
 
   return (
     <>
-      <SyncIndicator synced={synced} numberClients={numberClients} />
+      <NetworkIndicator
+        synced={synced}
+        decoding={decoding}
+        connected={connected}
+        numberClients={numberClients}
+      />
       <ScreenCenter>
+        <Visualizer getData={getVisualizerData} />
         {pads.map((pad, index) => (
           <UploadPad
             key={index}
             play={() => playPad(pad.soundID)}
+            stop={() => stopPad(pad.soundID)}
             fileName={pad.fileName}
             onLoadFile={(file: File) => fileLoaded(index, file)}
           />

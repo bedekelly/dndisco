@@ -87,7 +87,7 @@ export default function Visualizer({ getData }: VisualizerProps) {
   });
 
   return (
-    <div className="bg-blue-300 shadow-2xl w-28 h-28 rounded-2xl">
+    <div className="m-4 bg-blue-300 shadow-2xl w-28 h-28 rounded-2xl">
       <canvas className="w-28 h-28 bg-gray-400 rounded-2xl" ref={canvasRef} />
     </div>
   );
