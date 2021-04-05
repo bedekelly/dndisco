@@ -27,8 +27,6 @@ interface SocketWithOnAny extends Socket {
   onAny(listener: (event: any) => void): void;
 }
 
-const socket = (socketIO(SOCKET_SERVER_URL) as unknown) as SocketWithOnAny;
-
-export function useSocket() {
-  return socket;
-}
+export const globalSocket = (socketIO(
+  SOCKET_SERVER_URL
+) as unknown) as SocketWithOnAny;

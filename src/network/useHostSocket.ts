@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { EventData, InitialLoadPayload, useSocket } from "./useSockets";
+import { EventData, InitialLoadPayload, globalSocket } from "./useSockets";
 import { Socket } from "socket.io-client";
 import useSync from "./useSync";
 
@@ -26,10 +26,9 @@ function useBroadcastEvent(socket: typeof Socket) {
 }
 
 export default function useHostSocket(onInitialLoad: OnInitialLoad) {
-  const socket = useSocket();
-  const [connected, synced, setSyncing, numberClients] = useSync(socket);
-  useSocketLoad(socket, onInitialLoad);
-  const broadcastEvent = useBroadcastEvent(socket);
+  const [connected, synced, setSyncing, numberClients] = useSync(globalSocket);
+  useSocketLoad(globalSocket, onInitialLoad);
+  const broadcastEvent = useBroadcastEvent(globalSocket);
 
   return { broadcastEvent, synced, connected, numberClients, setSyncing };
 }
