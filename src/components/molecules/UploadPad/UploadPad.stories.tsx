@@ -1,10 +1,12 @@
 import UploadPad from "./UploadPad";
 import React from "react";
 
-export default {
+const storyConfig = {
   title: "Atoms/Pad",
   component: UploadPad,
 };
+
+export default storyConfig;
 
 export const BasicUploadPad = (args: any) => <UploadPad {...args} />;
 BasicUploadPad.argTypes = {

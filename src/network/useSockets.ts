@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import socketIO from "socket.io-client";
 
 type Socket = SocketIOClient.Socket;
