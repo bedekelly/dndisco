@@ -7,6 +7,7 @@ import {
   InitialLoadPayload,
   LoadPayload,
   PlayPayload,
+  InitialPlayPayload,
 } from "./useSockets";
 import useClientSocket from "./useClientSocket";
 
@@ -36,6 +37,15 @@ function useNetworkSoundEvents(buffers: Omit<Buffers, "getVisualizerData">) {
             const { soundID } = event.payload as PlayPayload;
             return buffers.playBuffer(soundID);
           }
+          case "INITIAL_PLAY":
+            const buffersToPlay = event.payload as InitialPlayPayload;
+
+            console.log(buffersToPlay);
+            return Promise.all(
+              buffersToPlay.map(([soundID, offset]) =>
+                buffers.playBufferAtOffset(soundID, offset)
+              )
+            );
           case "DELETE": {
             // Todo: can we clean up the buffer?
             const { soundID } = event.payload as PlayPayload;

@@ -102,8 +102,8 @@ function useHostUI() {
     }
     const loadedBuffer = await loadBufferFromFile(soundFile);
     setDecoding(false);
-    const { encodedData, soundID, fileName } = loadedBuffer;
-    broadcastEvent(LOAD(soundID, encodedData));
+    const { encodedData, soundID, fileName, duration } = loadedBuffer;
+    broadcastEvent(LOAD(soundID, encodedData, duration));
     setPads(
       produce(pads, (draft) => {
         draft[index] = { soundID, fileName };

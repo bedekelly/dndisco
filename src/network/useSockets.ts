@@ -2,15 +2,19 @@ import socketIO from "socket.io-client";
 
 type Socket = SocketIOClient.Socket;
 
-export const SOCKET_SERVER_URL = "https://05a263a601cc.ngrok.io";
+export const SOCKET_SERVER_URL =
+  process.env.REACT_APP_SOCKET_SERVER_URL?.replaceAll('"', "") || "";
+console.log({ SOCKET_SERVER_URL });
+
+type SoundID = string;
 
 export type LoadPayload = {
-  soundID: string;
+  soundID: SoundID;
   encodedData: ArrayBuffer;
 };
 
 export type PlayPayload = {
-  soundID: string;
+  soundID: SoundID;
 };
 
 export type InitialLoadPayload = {
@@ -19,8 +23,11 @@ export type InitialLoadPayload = {
   };
 };
 
+type Offset = number;
+export type InitialPlayPayload = [SoundID, Offset][];
+
 export type EventData = {
-  payload?: LoadPayload | PlayPayload | InitialLoadPayload;
+  payload?: LoadPayload | PlayPayload | InitialLoadPayload | InitialPlayPayload;
 };
 
 interface SocketWithOnAny extends Socket {

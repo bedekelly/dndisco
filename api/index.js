@@ -16,12 +16,19 @@ const PORT = 1234;
 
 const session = {
   files: {},
+  durations: {},
   clients: {},
+  lastPlayed: {},
 };
 
 function getSessionFiles() {
   // console.log("Getting session files: ", session.files);
   return session.files;
+}
+
+function currentTimeSeconds() {
+  const [seconds, nanos] = process.hrtime();
+  return seconds + nanos / 1000_000_000;
 }
 
 io.on("connection", (socket) => {
@@ -49,34 +56,43 @@ io.on("connection", (socket) => {
   socket.on("LOAD", (message) => {
     console.log("Got file to load:", message.payload.soundID);
     session.files[message.payload.soundID] = message.payload.encodedData;
+    session.durations[message.payload.soundID] = message.payload.duration;
     socket.broadcast.emit("LOAD", message);
   });
 
   socket.on("STOP", (event) => {
     console.log("Got STOP event:", event);
     socket.broadcast.emit("STOP", event);
+    session.lastPlayed[event.payload.soundID] = null;
   });
 
   socket.on("DELETE", (event) => {
     console.log("Deleting files...");
     delete session.files[event.payload.soundID];
+    delete session.lastPlayed[event.payload.soundID];
     socket.broadcast.emit("DELETE", event);
   });
 
   socket.on("PLAY", (event) => {
     console.log("Got message to play:", event);
+    session.lastPlayed[event.payload.soundID] = currentTimeSeconds();
     socket.broadcast.emit("PLAY", event);
   });
 
   socket.on("STOP_ALL", () => {
     console.log("Stopping everything.");
     socket.broadcast.emit("STOP_ALL");
+    for (let soundID of Object.keys(session.lastPlayed)) {
+      session.lastPlayed[soundID] = null;
+    }
   });
 
   socket.on("LOADED_FILES", (message) => {
-    console.log("Loaded files:");
-    console.log(message);
     session.clients[socket.id].files = message;
+    const filesToPlay = Object.entries(session.lastPlayed)
+      .filter(([, value]) => value != null)
+      .map(([soundID, playTime]) => [soundID, currentTimeSeconds() - playTime]);
+    socket.emit("INITIAL_PLAY", { payload: filesToPlay });
     updateHost();
   });
 

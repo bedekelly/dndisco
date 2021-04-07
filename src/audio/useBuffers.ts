@@ -9,6 +9,7 @@ type BufferLoadedInfo = {
   encodedData: ArrayBuffer;
   soundID: string;
   fileName: string;
+  duration: number;
 };
 
 export type Buffers = {
@@ -21,6 +22,7 @@ export type Buffers = {
   getLoadedSounds: () => string[];
   loadBufferFromFile: (soundFile: File) => Promise<BufferLoadedInfo>;
   playBuffer: (soundID: string) => Promise<void>;
+  playBufferAtOffset: (soundID: string, offset: number) => Promise<void>;
   stopAll: () => void;
 };
 
@@ -55,8 +57,9 @@ export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
     );
     const soundID = uuid();
     const fileName = soundFile.name;
+    const { duration } = decodedData;
     setBuffers({ ...buffers, [soundID]: decodedData });
-    return { encodedData, soundID, fileName };
+    return { encodedData, soundID, fileName, duration };
   }
 
   const loadBuffer = useCallback(
@@ -69,15 +72,20 @@ export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
     [context]
   );
 
-  async function playBuffer(soundID: string) {
+  function playBuffer(soundID: string) {
+    return playBufferAtOffset(soundID, 0);
+  }
+
+  async function playBufferAtOffset(soundID: string, offset: number) {
     if (!context || !unlock || !destination) return;
     await unlock();
+    console.log("Playing buffer", soundID, "at", offset);
     const bufferSource = context.createBufferSource();
     bufferSources.current[soundID]?.disconnect();
     bufferSources.current[soundID] = bufferSource;
     bufferSource.buffer = buffers[soundID];
     bufferSource.connect(destination);
-    bufferSource.start(0);
+    bufferSource.start(0, offset);
   }
 
   const stopBuffer = useCallback((soundID: string) => {
@@ -98,6 +106,7 @@ export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
     getLoadedSounds,
     loadBufferFromFile,
     playBuffer,
+    playBufferAtOffset,
     stopAll,
   };
 }

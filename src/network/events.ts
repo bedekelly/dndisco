@@ -2,8 +2,12 @@ export function STOP(oldID: string) {
   return { type: "STOP", payload: { soundID: oldID } };
 }
 
-export function LOAD(soundID: string, encodedData: ArrayBuffer) {
-  return { type: "LOAD", payload: { soundID, encodedData } };
+export function LOAD(
+  soundID: string,
+  encodedData: ArrayBuffer,
+  duration: number
+) {
+  return { type: "LOAD", payload: { soundID, encodedData, duration } };
 }
 
 export function PRE_LOAD() {
