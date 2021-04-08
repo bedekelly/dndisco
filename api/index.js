@@ -91,7 +91,8 @@ io.on("connection", (socket) => {
     session.clients[socket.id].files = message;
     const filesToPlay = Object.entries(session.lastPlayed)
       .filter(([, value]) => value != null)
-      .map(([soundID, playTime]) => [soundID, currentTimeSeconds() - playTime]);
+      .map(([soundID, playTime]) => [soundID, currentTimeSeconds() - playTime])
+      .filter(([soundID, playingFor]) => playingFor < session.durations[soundID])
     socket.emit("INITIAL_PLAY", { payload: filesToPlay });
     updateHost();
   });
