@@ -2,6 +2,23 @@
 
 Simple networked soundboard for DMs playing games online, or anyone else.
 
+Requirements:
+
+* jq
+* nodemon
+* ngrok
+
+
+To run in development, run these three commands in separate tabs:
+```
+$ ./server.sh
+$ ./ngrok.sh
+$ ./run.sh
+```
+
+In production, configure the socket server URL manually and use `yarn build` to create a production bundle. Serve the bundle statically using your tool of choice. Run the server as before. _(Todo: improve this experience, and/or provide a hosted version!)_
+
+
 Roadmap: 
 
 - [x] Upload and play sounds w/ drag-n-drop (DnD!)
