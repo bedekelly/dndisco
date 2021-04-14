@@ -7,7 +7,7 @@ const io = require("socket.io")(http, {
     methods: ["GET", "POST"],
   },
   maxHttpBufferSize: 1e8,
-  pingTimeout: 30000,
+  pingTimeout: 10000,
 });
 
 app.use(cors());
@@ -92,7 +92,9 @@ io.on("connection", (socket) => {
     const filesToPlay = Object.entries(session.lastPlayed)
       .filter(([, value]) => value != null)
       .map(([soundID, playTime]) => [soundID, currentTimeSeconds() - playTime])
-      .filter(([soundID, playingFor]) => playingFor < session.durations[soundID])
+      .filter(
+        ([soundID, playingFor]) => playingFor < session.durations[soundID]
+      );
     socket.emit("INITIAL_PLAY", { payload: filesToPlay });
     updateHost();
   });

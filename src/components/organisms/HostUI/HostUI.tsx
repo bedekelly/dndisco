@@ -92,6 +92,11 @@ function useHostUI() {
    */
   const [decoding, setDecoding] = useState(false);
   async function fileLoaded(index: number, soundFile: File) {
+    if (soundFile.size / 1_000_000 > 20) {
+      alert("Sorry — we only support files up to 20MB currently.");
+      return;
+    }
+
     setDecoding(true);
     setSyncing();
     broadcastEvent(PRE_LOAD());
