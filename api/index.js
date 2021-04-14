@@ -123,6 +123,7 @@ function updateHost() {
   );
   const numClients = clients.filter(([clientID]) => clientID !== session.hostID)
     .length;
+  console.log(`Updating host with number of clients: ${numClients}`);
   io.to(session.hostID).emit("SYNC", {
     numClients,
     filesSynced,

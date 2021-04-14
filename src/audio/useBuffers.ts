@@ -41,7 +41,7 @@ export function loadInitialBuffers(
 }
 
 export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
-  const { unlock, context } = useAudioContext();
+  const { context, unlock } = useAudioContext();
   const [buffers, setBuffers] = useState<Record<string, AudioBuffer>>({});
   const bufferSources = useRef<Record<string, AudioBufferSourceNode>>({});
   const { destination, getVisualizerData } = useVisualisedDestination(
@@ -72,20 +72,29 @@ export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
     [context]
   );
 
+  async function unlockIfNeeded(offset: number) {
+    let delayedOffset = offset;
+    if (context.state === "suspended") {
+      const startTime = performance.now();
+      await unlock();
+      delayedOffset += (performance.now() - startTime) / 1000;
+    }
+    return delayedOffset;
+  }
+
   function playBuffer(soundID: string) {
     return playBufferAtOffset(soundID, 0);
   }
 
   async function playBufferAtOffset(soundID: string, offset: number) {
-    if (!context || !unlock || !destination) return;
-    await unlock();
-    console.log("Playing buffer", soundID, "at", offset);
+    if (destination == null) return;
+    let delayedOffset = await unlockIfNeeded(offset);
     const bufferSource = context.createBufferSource();
     bufferSources.current[soundID]?.disconnect();
     bufferSources.current[soundID] = bufferSource;
     bufferSource.buffer = buffers[soundID];
     bufferSource.connect(destination);
-    bufferSource.start(0, offset);
+    bufferSource.start(0, delayedOffset);
   }
 
   const stopBuffer = useCallback((soundID: string) => {
