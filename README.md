@@ -26,7 +26,7 @@ Roadmap:
 - [x] Unused files are cleaned up
 - [x] Host sees when all clients are synchronised  
 - [x] Hosts and clients see a sound visualisation
-- [ ] Playback progress of longer-running files is synced
+- [x] Playback progress of longer-running files is synced
 - [ ] Hosts create unique rooms for clients to join
 - [ ] Create a decent abstraction layer for websockets
 - [ ] Speed up sync notifications
