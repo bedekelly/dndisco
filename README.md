@@ -16,7 +16,7 @@ $ ./ngrok.sh
 $ ./run.sh
 ```
 
-In production, configure the socket server URL manually and use `yarn build` to create a production bundle. Serve the bundle statically using your tool of choice. Run the server as before. _(Todo: improve this experience, and/or provide a hosted version!)_
+In production, configure the socket server URL manually and use `yarn build` to create a production bundle. Serve the bundle statically using your tool of choice. Run the server as before. 
 
 
 Roadmap: 
@@ -30,3 +30,5 @@ Roadmap:
 - [ ] Hosts create unique rooms for clients to join
 - [ ] Create a decent abstraction layer for websockets
 - [ ] Speed up sync notifications
+- [ ] Improve self-hosting developer experience
+- [ ] Provide hosted solution / user logins
