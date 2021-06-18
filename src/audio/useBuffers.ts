@@ -24,6 +24,8 @@ export type Buffers = {
   playBuffer: (soundID: string) => Promise<void>;
   playBufferAtOffset: (soundID: string, offset: number) => Promise<void>;
   stopAll: () => void;
+  volume: number;
+  setVolume: (newVolume: number) => void;
 };
 
 export function loadInitialBuffers(
@@ -44,9 +46,12 @@ export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
   const { context, unlock } = useAudioContext();
   const [buffers, setBuffers] = useState<Record<string, AudioBuffer>>({});
   const bufferSources = useRef<Record<string, AudioBufferSourceNode>>({});
-  const { destination, getVisualizerData } = useVisualisedDestination(
-    hostOrGuest
-  );
+  const {
+    destination,
+    getVisualizerData,
+    volume,
+    setVolume,
+  } = useVisualisedDestination(hostOrGuest);
 
   async function loadBufferFromFile(
     soundFile: File
@@ -117,5 +122,7 @@ export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
     playBuffer,
     playBufferAtOffset,
     stopAll,
+    volume,
+    setVolume,
   };
 }

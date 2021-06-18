@@ -81,5 +81,9 @@ export default function useNetworkSound() {
   const { unlock, running } = useAudioContext() || {};
   const { getVisualizerData, ...buffers } = useBuffers("guest");
   const { synced, connected } = useNetworkSoundEvents(buffers);
-  return { unlock, synced, connected, running, getVisualizerData };
+  const volume = {
+    volume: buffers.volume,
+    setVolume: buffers.setVolume,
+  };
+  return { unlock, running, getVisualizerData, synced, connected, ...volume };
 }

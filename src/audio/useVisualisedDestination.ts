@@ -1,5 +1,5 @@
 import { useAudioContext } from "./AudioContextProvider";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const GUEST_DELAY_TIME = 0;
 
@@ -22,26 +22,37 @@ function createPanner(context: AudioContext, pan: number) {
 /**
  * Create an audio destination which also exposes a function to get visualiser data
  * on each animation frame. This is also where a pan/delay is introduced to aid with
- * debugging.
+ * debugging, and where a `gain` node is introduced to provide volume control.
  */
 export default function useVisualisedDestination(
   hostOrGuest: "host" | "guest"
 ) {
   const { context } = useAudioContext();
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
+  const [volume, setVolume] = useState(0.8);
 
   const destination = useMemo(() => {
     if (!context) return;
     const pan = createPanner(context, hostOrGuest === "host" ? -0.5 : 0.5);
     const delay = context.createDelay();
+    const gain = (gainRef.current = context.createGain());
     const analyser = (analyserRef.current = context.createAnalyser());
     analyser.fftSize = 32;
     delay.delayTime.value = hostOrGuest === "host" ? 0 : GUEST_DELAY_TIME;
     pan.connect(delay);
-    delay.connect(analyser);
+    delay.connect(gain);
+    gain.connect(analyser);
     analyser.connect(context.destination);
     return pan;
-  }, [analyserRef, context, hostOrGuest]);
+  }, [context, hostOrGuest]);
+
+  /**
+   * Update the gain node's volume when the volume state changes.
+   */
+  useEffect(() => {
+    gainRef.current?.gain.setValueAtTime(volume, 0);
+  }, [volume]);
 
   function getVisualizerData(oldArray?: Uint8Array): Uint8Array {
     const analyserNode = analyserRef.current;
@@ -53,5 +64,5 @@ export default function useVisualisedDestination(
     return array;
   }
 
-  return { destination, getVisualizerData };
+  return { destination, getVisualizerData, volume, setVolume };
 }
