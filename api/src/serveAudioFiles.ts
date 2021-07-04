@@ -1,0 +1,44 @@
+import express, { Express } from "express";
+import { v4 as uuid } from "uuid";
+import fs from "fs-extra";
+import sessions from "./sessions";
+
+export default function serveAudioFiles(
+  app: Express,
+  updateAllClients: (sessionID: string) => void
+) {
+  /**
+   * Serve all uploaded files (with UUID filenames) as static files.
+   * Set them as being immutable — i.e. they'll never be edited — and
+   * set their max-age to something really long.
+   */
+  app.use(
+    "/files",
+    express.static("files", {
+      immutable: true,
+      maxAge: 30 * 1000,
+    })
+  );
+
+  /**
+   * The host should be able to upload audio files. These files
+   * should have a UUID generated for them, which will be used
+   * to look them up in the filesystem and over the network.
+   */
+  app.post("/upload-audio/:sessionID", (request, response) => {
+    request.pipe(request.busboy);
+    const { sessionID } = request.params;
+    request.busboy.on("file", (fieldname, file, filename) => {
+      const soundID = uuid();
+      console.log("Uploading", filename, "as", soundID);
+      const fileStream = fs.createWriteStream("files/" + soundID);
+      file.pipe(fileStream);
+      fileStream.on("close", () => {
+        console.log("Completed upload of", filename, "as", soundID);
+        sessions[sessionID].files.push(soundID);
+        updateAllClients(sessionID);
+        response.send({ soundID });
+      });
+    });
+  });
+}

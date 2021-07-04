@@ -1,10 +1,10 @@
+// @ts-nocheck
 import React from "react";
 
 import TrafficLightDot from "../../atoms/TrafficLightDot";
 import ScreenCenter from "../../atoms/ScreenCenter";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
 import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
-import useNetworkSound from "../../../network/useNetworkSound";
 
 export default function GuestUI() {
   const {
@@ -15,7 +15,8 @@ export default function GuestUI() {
     getVisualizerData,
     volume,
     setVolume,
-  } = useNetworkSound();
+  } = {};
+
   return (
     <>
       <div className={"absolute top-4 right-4"}>

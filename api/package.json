@@ -6,7 +6,21 @@
   "author": "Bede Kelly",
   "license": "MIT",
   "dependencies": {
+    "busboy": "^0.3.1",
+    "connect-busboy": "^0.0.2",
     "express": "^4.17.1",
-    "socket.io": "^4.0.0"
+    "fs-extra": "^10.0.0",
+    "socket.io": "^4.0.0",
+    "ts-node": "^10.0.0"
+  },
+  "scripts": {
+    "api": "node --loader ts-node/esm ./index.ts"
+  },
+  "exports": {
+    "./index": null
+  },
+  "devDependencies": {
+    "@types/connect-busboy": "^0.0.2",
+    "@types/fs-extra": "^9.0.11"
   }
 }

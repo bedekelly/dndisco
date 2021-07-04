@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useAudioContext } from "./AudioContextProvider";
 import { useCallback, useRef, useState } from "react";
 import decodeAudioFile from "./decodeAudioFile";
@@ -20,7 +21,10 @@ export type Buffers = {
   stopBuffer: (id: string) => void;
   getVisualizerData: () => Uint8Array;
   getLoadedSounds: () => string[];
-  loadBufferFromFile: (soundFile: File) => Promise<BufferLoadedInfo>;
+  loadBufferFromFile: (
+    soundFile: File,
+    soundID: string
+  ) => Promise<BufferLoadedInfo>;
   playBuffer: (soundID: string) => Promise<void>;
   playBufferAtOffset: (soundID: string, offset: number) => Promise<void>;
   stopAll: () => void;
@@ -54,13 +58,13 @@ export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
   } = useVisualisedDestination(hostOrGuest);
 
   async function loadBufferFromFile(
-    soundFile: File
+    soundFile: File,
+    soundID: string
   ): Promise<BufferLoadedInfo> {
     const { encodedData, decodedData } = await decodeAudioFile(
       context,
       soundFile
     );
-    const soundID = uuid();
     const fileName = soundFile.name;
     const { duration } = decodedData;
     setBuffers({ ...buffers, [soundID]: decodedData });

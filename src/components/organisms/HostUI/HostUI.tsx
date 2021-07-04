@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useCallback, useState } from "react";
 import produce from "immer";
 
@@ -8,7 +9,7 @@ import { loadInitialBuffers, useBuffers } from "../../../audio/useBuffers";
 import usePersistentState from "../../../state/usePersistentState";
 import NetworkIndicator from "../../atoms/NetworkIndicator";
 import StopEverything from "../../atoms/StopEverything";
-import { EventData } from "../../../network/useSockets";
+import { EventData, SOCKET_SERVER_URL } from "../../../network/useSockets";
 import {
   LOAD,
   PLAY,
@@ -92,26 +93,31 @@ function useHostUI() {
    */
   const [decoding, setDecoding] = useState(false);
   async function fileLoaded(index: number, soundFile: File) {
-    if (soundFile.size / 1_000_000 > 20) {
-      alert("Sorry — we only support files up to 20MB currently.");
-      return;
-    }
-
     setDecoding(true);
     setSyncing();
-    broadcastEvent(PRE_LOAD());
+
     const oldID = pads[index].soundID;
     if (oldID) {
       stopBuffer(oldID);
       broadcastEvent(DELETE(oldID));
     }
-    const loadedBuffer = await loadBufferFromFile(soundFile);
+
+    const formData = new FormData();
+    formData.append("file", soundFile);
+
+    const response = await fetch(`${SOCKET_SERVER_URL}/upload-audio`, {
+      method: "POST",
+      // @ts-ignore: This is daft, fetch definitely supports files as body types since they inherit from Blob.
+      body: formData,
+    });
+    const { id } = await response.json();
+
+    const loadedBuffer = await loadBufferFromFile(soundFile, id);
     setDecoding(false);
-    const { encodedData, soundID, fileName, duration } = loadedBuffer;
-    broadcastEvent(LOAD(soundID, encodedData, duration));
+    const { encodedData, fileName, duration } = loadedBuffer;
     setPads(
       produce(pads, (draft) => {
-        draft[index] = { soundID, fileName };
+        draft[index] = { soundID: id, fileName };
       })
     );
   }
