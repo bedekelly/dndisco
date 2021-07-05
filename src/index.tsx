@@ -3,20 +3,19 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import { Route, Switch } from "wouter";
 import AudioContextProvider from "./audio/AudioContextProvider";
-// import HostUI from "./components/organisms/HostUI/HostUI";
-// import GuestUI from "./components/organisms/GuestUI/GuestUI";
-import TestClient from "./components/TestUI";
-import TestHost from "./components/TestHost";
+
+import GuestUI from "./components/organisms/GuestUI/GuestUI";
+import HostUI from "./components/organisms/HostUI/HostUI";
 
 ReactDOM.render(
   <React.StrictMode>
     <AudioContextProvider>
       <Switch>
         <Route path={"/host"}>
-          <TestHost />
+          <HostUI />
         </Route>
         <Route>
-          <TestClient />
+          <GuestUI />
         </Route>
       </Switch>
     </AudioContextProvider>

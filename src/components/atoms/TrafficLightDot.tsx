@@ -1,4 +1,4 @@
-type Color = "red" | "amber" | "green";
+export type Color = "red" | "amber" | "green";
 
 const dotStyles = {
   green: "bg-green-300",

@@ -5,7 +5,7 @@ import sessions from "./sessions";
 
 export default function serveAudioFiles(
   app: Express,
-  updateAllClients: (sessionID: string) => void
+  updateClientsAndHost: (sessionID: string) => void
 ) {
   /**
    * Serve all uploaded files (with UUID filenames) as static files.
@@ -34,10 +34,13 @@ export default function serveAudioFiles(
       const fileStream = fs.createWriteStream("files/" + soundID);
       file.pipe(fileStream);
       fileStream.on("close", () => {
-        console.log("Completed upload of", filename, "as", soundID);
+        // For future implementation, it's v important that this
+        // `push` operation is synchronous, so we don't call
+        // updateClients too early!
         sessions[sessionID].files.push(soundID);
-        updateAllClients(sessionID);
+        updateClientsAndHost(sessionID);
         response.send({ soundID });
+        console.log("Completed upload of", filename, "as", soundID);
       });
     });
   });

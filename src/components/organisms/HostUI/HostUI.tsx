@@ -1,178 +1,30 @@
-// @ts-nocheck
-import React, { useCallback, useState } from "react";
-import produce from "immer";
+import { useState } from "react";
+import NetworkIndicator, { NetworkState } from "../../atoms/NetworkIndicator";
 
-import ScreenCenter from "../../atoms/ScreenCenter";
-import UploadPad from "../../molecules/UploadPad/UploadPad";
-import useHostSocket from "../../../network/useHostSocket";
-import { loadInitialBuffers, useBuffers } from "../../../audio/useBuffers";
-import usePersistentState from "../../../state/usePersistentState";
-import NetworkIndicator from "../../atoms/NetworkIndicator";
-import StopEverything from "../../atoms/StopEverything";
-import { EventData, SOCKET_SERVER_URL } from "../../../network/useSockets";
-import {
-  LOAD,
-  PLAY,
-  DELETE,
-  STOP_ALL,
-  PRE_LOAD,
-  STOP,
-} from "../../../network/events";
-import Visualizer from "../../molecules/Visualizer/Visualizer";
-
-type Pad = {
-  soundID: string;
-  fileName: string;
-};
-
-const makePad = () =>
-  ({
-    soundID: "",
-    fileName: "",
-  } as Pad);
-const initialPads: Pad[] = [makePad(), makePad()];
-
-/**
- * For each pad, check if we've still got its buffer.
- * If so, great! If not, clear out that pad.
- */
-function updatePadsWithLoadedData(
-  pads: Pad[],
-  event: any,
-  loadedBuffers: string[]
-) {
-  const sharedFiles = Object.keys(event.payload.files);
-  const stillValid = (soundID: string) =>
-    !soundID ||
-    (loadedBuffers.includes(soundID) && sharedFiles.includes(soundID));
-  return pads.map((pad) => (stillValid(pad.soundID) ? pad : makePad()));
+function useSessionID() {
+  return "Session1";
 }
 
-function useHostUI() {
-  const [pads, setPads] = usePersistentState<Pad[]>("pads", initialPads);
-  const {
-    loadBufferFromFile,
-    loadBuffer,
-    playBuffer,
-    stopAll,
-    stopBuffer,
-    getVisualizerData,
-  } = useBuffers("host");
-
-  /**
-   * When we get an INITIAL_LOAD message as the host:
-   * 1. Load the buffers from the event.
-   * 2. Update the pads so that no outdated files are shown
-   *    (this can happen if the server is restarted).
-   */
-  const onInitialLoad = useCallback(
-    async (event: EventData) => {
-      const loadedBuffers = await loadInitialBuffers(event, loadBuffer);
-      setPads(updatePadsWithLoadedData(pads, event, loadedBuffers));
-    },
-    [loadBuffer, pads, setPads]
+function useNetworkData(sessionID: string) {
+  const [networkState, setNetworkState] = useState<NetworkState>(
+    "disconnected"
   );
+  const [numberClients, setNumberClients] = useState(0);
+  const [networkData, setNetworkData] = useState(null);
 
-  const server = useHostSocket(onInitialLoad);
-  const {
-    broadcastEvent,
-    synced,
-    connected,
-    setSyncing,
-    numberClients,
-  } = server;
-
-  /**
-   * When we drag-and-drop a file:
-   * 1. Show that we're syncing.
-   * 2. Stop the pad's old sound on the host's machine.
-   * 3. Broadcast a STOP event for that sound.
-   * 4. Load the file into a decoded audio buffer.
-   * 5. Broadcast a LOAD event with the encoded data.
-   * 6. Display the new filename on the pad.
-   */
-  const [decoding, setDecoding] = useState(false);
-  async function fileLoaded(index: number, soundFile: File) {
-    setDecoding(true);
-    setSyncing();
-
-    const oldID = pads[index].soundID;
-    if (oldID) {
-      stopBuffer(oldID);
-      broadcastEvent(DELETE(oldID));
-    }
-
-    const formData = new FormData();
-    formData.append("file", soundFile);
-
-    const response = await fetch(`${SOCKET_SERVER_URL}/upload-audio`, {
-      method: "POST",
-      // @ts-ignore: This is daft, fetch definitely supports files as body types since they inherit from Blob.
-      body: formData,
-    });
-    const { id } = await response.json();
-
-    const loadedBuffer = await loadBufferFromFile(soundFile, id);
-    setDecoding(false);
-    const { encodedData, fileName, duration } = loadedBuffer;
-    setPads(
-      produce(pads, (draft) => {
-        draft[index] = { soundID: id, fileName };
-      })
-    );
-  }
-
-  async function playPad(soundID: string) {
-    if (!synced) return;
-    broadcastEvent(PLAY(soundID));
-    return playBuffer(soundID);
-  }
-
-  async function stopPad(soundID: string) {
-    if (!synced) return;
-    broadcastEvent(STOP(soundID));
-    return stopBuffer(soundID);
-  }
-
-  async function stopEverything() {
-    broadcastEvent(STOP_ALL());
-    return stopAll();
-  }
-
-  return {
-    pads,
-    decoding,
-    synced,
-    connected,
-    numberClients,
-    fileLoaded,
-    playPad,
-    stopPad,
-    stopEverything,
-    getVisualizerData,
-  };
+  return { networkState, networkData, numberClients };
 }
 
 export default function HostUI() {
-  const {
-    pads,
-    synced,
-    connected,
-    decoding,
-    numberClients,
-    fileLoaded,
-    playPad,
-    stopPad,
-    stopEverything,
-    getVisualizerData,
-  } = useHostUI();
+  const sessionID = useSessionID();
+  const { networkState, networkData, numberClients } = useNetworkData(
+    sessionID
+  );
 
   return (
     <>
       <NetworkIndicator
-        synced={synced}
-        decoding={decoding}
-        connected={connected}
+        networkState={networkState}
         numberClients={numberClients}
       />
       <ScreenCenter>

@@ -1,30 +1,32 @@
-import TrafficLightDot from "./TrafficLightDot";
+import TrafficLightDot, { Color } from "./TrafficLightDot";
+
+export type NetworkState = "disconnected" | "syncing" | "ready";
+
+const stateColor: Record<NetworkState, Color> = {
+  disconnected: "red",
+  syncing: "amber",
+  ready: "green",
+};
 
 export default function NetworkIndicator({
-  connected,
-  synced,
+  networkState,
   numberClients,
-  decoding,
 }: {
-  connected: boolean;
-  synced: boolean;
+  networkState: NetworkState;
   numberClients: number;
-  decoding: boolean;
 }) {
   return (
     <div className="absolute w-full p-4">
-      {connected ? (
+      {networkState !== "disconnected" ? (
         <p>
-          {numberClients} connected {!synced && "(Syncing...)"}
+          {numberClients} connected{" "}
+          {networkState === "syncing" && "(Syncing...)"}
         </p>
       ) : (
         <p>Connecting...</p>
       )}
-      {decoding && "Decoding..."}
       <div className="absolute right-4 top-4">
-        <TrafficLightDot
-          color={connected ? (synced ? "green" : "amber") : "red"}
-        />
+        <TrafficLightDot color={stateColor[networkState]} />
       </div>
     </div>
   );
