@@ -1,16 +1,18 @@
 const app = require("express")();
 const http = require("http").Server(app);
 const cors = require("cors");
+const { v4: uuid } = require("uuid");
+const fs = require("fs-extra");
+const busboy = require("connect-busboy");
 const io = require("socket.io")(http, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
-  maxHttpBufferSize: 1e8,
-  pingTimeout: 10000,
 });
 
 app.use(cors());
+app.use(busboy());
 
 const PORT = 1234;
 
@@ -31,9 +33,34 @@ function currentTimeSeconds() {
   return seconds + nanos / 1000_000_000;
 }
 
+const hosts = new Set();
+
+app.post("/upload-audio", (request, response) => {
+  request.pipe(request.busboy);
+  request.busboy.on("file", (fieldname, file, filename) => {
+    const id = uuid();
+    console.log("Uploading", filename, "as", id);
+    const fileStream = fs.createWriteStream("files/" + id);
+    file.pipe(fileStream);
+    fileStream.on("close", () => {
+      console.log("Completed upload of", filename, "as", id);
+      io.emit("LOAD", id);
+      updateHost();
+      response.send({ id });
+    });
+  });
+});
+
 io.on("connection", (socket) => {
   console.log("Got connection.");
-  session.clients[socket.id] = { socket, files: [] };
+  if (!(socket.id in session.clients)) {
+    console.log(socket.id, session.clients);
+    session.clients[socket.id] = { socket, files: [] };
+  } else {
+    console.log(socket.id);
+    console.log(session.clients);
+  }
+
   updateHost();
 
   socket.emit("INITIAL_LOAD", {
@@ -46,18 +73,12 @@ io.on("connection", (socket) => {
       console.log(`Host has changed (${session.hostID} => ${socket.id})`);
     }
     session.hostID = socket.id;
+    hosts.add(session.hostID);
     updateHost();
   });
 
   socket.on("PRE_LOAD", () => {
     socket.broadcast.emit("PRE_LOAD");
-  });
-
-  socket.on("LOAD", (message) => {
-    console.log("Got file to load:", message.payload.soundID);
-    session.files[message.payload.soundID] = message.payload.encodedData;
-    session.durations[message.payload.soundID] = message.payload.duration;
-    socket.broadcast.emit("LOAD", message);
   });
 
   socket.on("STOP", (event) => {
@@ -88,6 +109,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("LOADED_FILES", (message) => {
+    console.log("LOADED_FILES", { message });
     session.clients[socket.id].files = message;
     const filesToPlay = Object.entries(session.lastPlayed)
       .filter(([, value]) => value != null)
@@ -121,11 +143,20 @@ function updateHost() {
   const sessionFiles = Object.keys(getSessionFiles());
   const filesSynced = clients.every(
     ([clientID, client]) =>
-      clientID === session.hostID || isSubsetOf(sessionFiles, client.files)
+      hosts.has(clientID) || isSubsetOf(sessionFiles, client.files)
   );
-  const numClients = clients.filter(([clientID]) => clientID !== session.hostID)
-    .length;
-  console.log(`Updating host with number of clients: ${numClients}`);
+  const numClients = Object.keys(session.clients).filter(
+    (clientID) => !hosts.has(clientID)
+  ).length;
+
+  console.log(
+    `Updating host with number of clients: ${numClients} and synced ${filesSynced}`
+  );
+  console.log({
+    filesSynced,
+    sessionFiles,
+    clientFiles: Object.values(session.clients).map((c) => c.files),
+  });
   io.to(session.hostID).emit("SYNC", {
     numClients,
     filesSynced,
