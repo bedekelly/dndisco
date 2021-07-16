@@ -8,6 +8,7 @@ type Session = {
   host: string | null;
   clientFiles: Record<string, SoundID[]>;
   sockets: Record<string, Socket>;
+  sessionID: string;
 };
 
 const sessions: Record<SessionID, Session> = {};
@@ -15,12 +16,13 @@ const sessions: Record<SessionID, Session> = {};
 /**
  * Create a new, empty session.
  */
-function makeSession() {
+function makeSession(sessionID: string): Session {
   return {
     files: ["3164ed33-f7c1-49df-a9bf-12f6aac4dbf5"],
     host: null,
     sockets: {},
     clientFiles: {},
+    sessionID,
   };
 }
 
@@ -29,7 +31,7 @@ function makeSession() {
  */
 export function getSession(sessionID: string): Session {
   if (!sessions[sessionID]) {
-    sessions[sessionID] = makeSession();
+    sessions[sessionID] = makeSession(sessionID);
   }
   return sessions[sessionID];
 }

@@ -1,7 +1,8 @@
 import express, { Express } from "express";
 import { v4 as uuid } from "uuid";
 import fs from "fs-extra";
-import sessions from "./sessions";
+import sessions, { getSession } from "./sessions";
+import { randomUUID } from "crypto";
 
 export default function serveAudioFiles(
   app: Express,
@@ -28,7 +29,7 @@ export default function serveAudioFiles(
   app.post("/upload-audio/:sessionID", (request, response) => {
     request.pipe(request.busboy);
     const { sessionID } = request.params;
-    request.busboy.on("file", (fieldname, file, filename) => {
+    request.busboy.on("file", (_fieldname, file, filename) => {
       const soundID = uuid();
       console.log("Uploading", filename, "as", soundID);
       const fileStream = fs.createWriteStream("files/" + soundID);
@@ -43,5 +44,11 @@ export default function serveAudioFiles(
         console.log("Completed upload of", filename, "as", soundID);
       });
     });
+  });
+
+  app.post("/session", (_request, response) => {
+    const sessionID = randomUUID();
+    getSession(sessionID);
+    response.send({ sessionID });
   });
 }

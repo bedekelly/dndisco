@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useLocation } from "wouter";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { BufferLoadedInfo, useBuffers } from "../../../audio/useBuffers";
 import ScreenCenter from "../../atoms/ScreenCenter";
 import UploadPad from "../../molecules/UploadPad/UploadPad";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
+import { apiURL } from "../../pages/CreateSession";
 // import Visualizer from "../../molecules/Visualizer/Visualizer";
 
 function makeInitialPads(): Pad[] {
@@ -31,10 +33,16 @@ type Pad = EmptyPad | PopulatedPad;
 type BufferAudio = {
   playBuffer: (soundID: string) => void;
   stopBuffer: (soundID: string) => void;
-  loadBufferFromFile: (soundFile: File) => Promise<BufferLoadedInfo>;
+  loadBufferFromFile: (
+    soundFile: File,
+    soundID: string
+  ) => Promise<BufferLoadedInfo>;
 };
 
-function usePads(audio: BufferAudio) {
+function usePads(
+  audio: BufferAudio,
+  uploadFile: (file: File) => Promise<string>
+) {
   const [pads, setPads] = useState<Pad[]>(makeInitialPads);
 
   function playPad(i: number) {
@@ -51,8 +59,8 @@ function usePads(audio: BufferAudio) {
   async function onLoadFile(padIndex: number, file: File) {
     // Todo: upload file in parallel.
     console.log({ padIndex, file });
-    const { soundID } = await audio.loadBufferFromFile(file);
-    console.log({ soundID });
+    const soundID = await uploadFile(file);
+    await audio.loadBufferFromFile(file, soundID);
     setPads((oldPads) => {
       const newPads = [...oldPads];
       newPads[padIndex] = { filename: file.name, soundID };
@@ -63,9 +71,27 @@ function usePads(audio: BufferAudio) {
   return { pads, playPad, stopPad, onLoadFile };
 }
 
-export default function HostUI() {
+type HostUIProps = {
+  params: {
+    sessionID: string;
+  };
+};
+
+function useUpload(sessionID: string) {
+  return (file: File) => {
+    return fetch(`${apiURL}/upload-audio/${sessionID}`, {
+      method: "POST",
+      body: file,
+    })
+      .then((response) => response.json())
+      .then(({ soundID }) => soundID);
+  };
+}
+
+export default function HostUI({ params: { sessionID } }: HostUIProps) {
   const audio = useBuffers("host");
-  const { pads, playPad, stopPad, onLoadFile } = usePads(audio);
+  const uploadFile = useUpload(sessionID);
+  const { pads, playPad, stopPad, onLoadFile } = usePads(audio, uploadFile);
 
   return (
     <UnlockAudio>

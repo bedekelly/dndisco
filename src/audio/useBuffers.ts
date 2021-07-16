@@ -23,13 +23,13 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
   } = useVisualisedDestination(hostOrGuest);
 
   async function loadBufferFromFile(
-    soundFile: File
+    soundFile: File,
+    soundID: string
   ): Promise<BufferLoadedInfo> {
     const { encodedData, decodedData } = await decodeAudioFile(
       context,
       soundFile
     );
-    const soundID = uuid();
     const fileName = soundFile.name;
     const { duration } = decodedData;
     setBuffers({ ...buffers, [soundID]: decodedData });
