@@ -44,13 +44,13 @@ export default function UploadPad({
       >
         <p className={styles.padName}>{fileName}</p>
       </button>
-      <button className={styles.stop} aria-label="stop" onClick={stop}>
-        <i className="block bg-white w-2.5 h-2.5 rounded-sm text-center" />
-      </button>
+      {fileName && (
+        <button className={styles.stop} aria-label="stop" onClick={stop}>
+          <i className="block bg-white w-2.5 h-2.5 rounded-sm text-center" />
+        </button>
+      )}
       <button
-        {...getRootProps({
-          /* isDragActive: draggingOverInput*/
-        })}
+        {...getRootProps({})}
         className={`${styles.uploadSound} ${fullSizeInput}`}
       >
         <input {...getInputProps()} />

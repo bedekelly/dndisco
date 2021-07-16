@@ -10,12 +10,13 @@ ReactDOM.render(
   <React.StrictMode>
     <AudioContextProvider>
       <Switch>
-        <Route path={"/host"}>
+        <Route path="/host">
           <HostUI />
         </Route>
-        <Route>
+        <Route path="/guest">
           <GuestUI />
         </Route>
+        <Route>hello 404</Route>
       </Switch>
     </AudioContextProvider>
   </React.StrictMode>,

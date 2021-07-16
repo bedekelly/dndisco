@@ -1,187 +1,86 @@
-import React, { useCallback, useState } from "react";
-import produce from "immer";
+import React, { useState } from "react";
 
+import UnlockAudio from "../../../audio/UnlockAudio";
+import { BufferLoadedInfo, useBuffers } from "../../../audio/useBuffers";
 import ScreenCenter from "../../atoms/ScreenCenter";
 import UploadPad from "../../molecules/UploadPad/UploadPad";
-import useHostSocket from "../../../network/useHostSocket";
-import { loadInitialBuffers, useBuffers } from "../../../audio/useBuffers";
-import usePersistentState from "../../../state/usePersistentState";
-import NetworkIndicator from "../../atoms/NetworkIndicator";
-import StopEverything from "../../atoms/StopEverything";
-import { EventData } from "../../../network/useSockets";
-import {
-  LOAD,
-  PLAY,
-  DELETE,
-  STOP_ALL,
-  PRE_LOAD,
-  STOP,
-} from "../../../network/events";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
+// import Visualizer from "../../molecules/Visualizer/Visualizer";
 
-type Pad = {
-  soundID: string;
-  fileName: string;
-};
-
-const makePad = () =>
-  ({
-    soundID: "",
-    fileName: "",
-  } as Pad);
-const initialPads: Pad[] = [makePad(), makePad()];
-
-/**
- * For each pad, check if we've still got its buffer.
- * If so, great! If not, clear out that pad.
- */
-function updatePadsWithLoadedData(
-  pads: Pad[],
-  event: any,
-  loadedBuffers: string[]
-) {
-  const sharedFiles = Object.keys(event.payload.files);
-  const stillValid = (soundID: string) =>
-    !soundID ||
-    (loadedBuffers.includes(soundID) && sharedFiles.includes(soundID));
-  return pads.map((pad) => (stillValid(pad.soundID) ? pad : makePad()));
+function makeInitialPads(): Pad[] {
+  return Array(2)
+    .fill(0)
+    .map(() => ({
+      filename: null,
+      soundID: null,
+    }));
 }
 
-function useHostUI() {
-  const [pads, setPads] = usePersistentState<Pad[]>("pads", initialPads);
-  const {
-    loadBufferFromFile,
-    loadBuffer,
-    playBuffer,
-    stopAll,
-    stopBuffer,
-    getVisualizerData,
-  } = useBuffers("host");
+type EmptyPad = {
+  soundID: null;
+  filename: null;
+};
 
-  /**
-   * When we get an INITIAL_LOAD message as the host:
-   * 1. Load the buffers from the event.
-   * 2. Update the pads so that no outdated files are shown
-   *    (this can happen if the server is restarted).
-   */
-  const onInitialLoad = useCallback(
-    async (event: EventData) => {
-      const loadedBuffers = await loadInitialBuffers(event, loadBuffer);
-      setPads(updatePadsWithLoadedData(pads, event, loadedBuffers));
-    },
-    [loadBuffer, pads, setPads]
-  );
+type PopulatedPad = {
+  soundID: string;
+  filename: string;
+};
 
-  const server = useHostSocket(onInitialLoad);
-  const {
-    broadcastEvent,
-    synced,
-    connected,
-    setSyncing,
-    numberClients,
-  } = server;
+type Pad = EmptyPad | PopulatedPad;
 
-  /**
-   * When we drag-and-drop a file:
-   * 1. Show that we're syncing.
-   * 2. Stop the pad's old sound on the host's machine.
-   * 3. Broadcast a STOP event for that sound.
-   * 4. Load the file into a decoded audio buffer.
-   * 5. Broadcast a LOAD event with the encoded data.
-   * 6. Display the new filename on the pad.
-   */
-  const [decoding, setDecoding] = useState(false);
-  async function fileLoaded(index: number, soundFile: File) {
-    if (soundFile.size / 1_000_000 > 20) {
-      alert("Sorry — we only support files up to 20MB currently.");
-      return;
-    }
+type BufferAudio = {
+  playBuffer: (soundID: string) => void;
+  stopBuffer: (soundID: string) => void;
+  loadBufferFromFile: (soundFile: File) => Promise<BufferLoadedInfo>;
+};
 
-    setDecoding(true);
-    setSyncing();
-    broadcastEvent(PRE_LOAD());
-    const oldID = pads[index].soundID;
-    if (oldID) {
-      stopBuffer(oldID);
-      broadcastEvent(DELETE(oldID));
-    }
-    const loadedBuffer = await loadBufferFromFile(soundFile);
-    setDecoding(false);
-    const { encodedData, soundID, fileName, duration } = loadedBuffer;
-    broadcastEvent(LOAD(soundID, encodedData, duration));
-    setPads(
-      produce(pads, (draft) => {
-        draft[index] = { soundID, fileName };
-      })
-    );
+function usePads(audio: BufferAudio) {
+  const [pads, setPads] = useState<Pad[]>(makeInitialPads);
+
+  function playPad(i: number) {
+    const { soundID } = pads[i];
+    if (soundID == null) return;
+    audio.playBuffer(soundID);
   }
 
-  async function playPad(soundID: string) {
-    if (!synced) return;
-    broadcastEvent(PLAY(soundID));
-    return playBuffer(soundID);
+  function stopPad(i: number) {
+    const { soundID } = pads[i];
+    if (soundID) audio.stopBuffer(soundID);
   }
 
-  async function stopPad(soundID: string) {
-    if (!synced) return;
-    broadcastEvent(STOP(soundID));
-    return stopBuffer(soundID);
+  async function onLoadFile(padIndex: number, file: File) {
+    // Todo: upload file in parallel.
+    console.log({ padIndex, file });
+    const { soundID } = await audio.loadBufferFromFile(file);
+    console.log({ soundID });
+    setPads((oldPads) => {
+      const newPads = [...oldPads];
+      newPads[padIndex] = { filename: file.name, soundID };
+      return newPads;
+    });
   }
 
-  async function stopEverything() {
-    broadcastEvent(STOP_ALL());
-    return stopAll();
-  }
-
-  return {
-    pads,
-    decoding,
-    synced,
-    connected,
-    numberClients,
-    fileLoaded,
-    playPad,
-    stopPad,
-    stopEverything,
-    getVisualizerData,
-  };
+  return { pads, playPad, stopPad, onLoadFile };
 }
 
 export default function HostUI() {
-  const {
-    pads,
-    synced,
-    connected,
-    decoding,
-    numberClients,
-    fileLoaded,
-    playPad,
-    stopPad,
-    stopEverything,
-    getVisualizerData,
-  } = useHostUI();
+  const audio = useBuffers("host");
+  const { pads, playPad, stopPad, onLoadFile } = usePads(audio);
 
   return (
-    <>
-      <NetworkIndicator
-        synced={synced}
-        decoding={decoding}
-        connected={connected}
-        numberClients={numberClients}
-      />
+    <UnlockAudio>
       <ScreenCenter>
-        <Visualizer getData={getVisualizerData} />
-        {pads.map((pad, index) => (
+        <Visualizer getData={audio.getVisualizerData} />
+        {pads.map((pad, i) => (
           <UploadPad
-            key={index}
-            play={() => playPad(pad.soundID)}
-            stop={() => stopPad(pad.soundID)}
-            fileName={pad.fileName}
-            onLoadFile={(file: File) => fileLoaded(index, file)}
+            key={i}
+            play={() => playPad(i)}
+            stop={() => stopPad(i)}
+            onLoadFile={(file) => onLoadFile(i, file)}
+            fileName={pad.filename}
           />
         ))}
       </ScreenCenter>
-      <StopEverything onClick={stopEverything} />
-    </>
+    </UnlockAudio>
   );
 }

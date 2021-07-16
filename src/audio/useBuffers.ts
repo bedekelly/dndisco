@@ -2,47 +2,16 @@ import { useAudioContext } from "./AudioContextProvider";
 import { useCallback, useRef, useState } from "react";
 import decodeAudioFile from "./decodeAudioFile";
 import { v4 as uuid } from "uuid";
-import { EventData, InitialLoadPayload } from "../network/useSockets";
 import useVisualisedDestination from "./useVisualisedDestination";
 
-type BufferLoadedInfo = {
+export type BufferLoadedInfo = {
   encodedData: ArrayBuffer;
   soundID: string;
   fileName: string;
   duration: number;
 };
 
-export type Buffers = {
-  loadBuffer: (
-    id: string,
-    buffer: ArrayBuffer
-  ) => Promise<AudioBuffer | undefined>;
-  stopBuffer: (id: string) => void;
-  getVisualizerData: () => Uint8Array;
-  getLoadedSounds: () => string[];
-  loadBufferFromFile: (soundFile: File) => Promise<BufferLoadedInfo>;
-  playBuffer: (soundID: string) => Promise<void>;
-  playBufferAtOffset: (soundID: string, offset: number) => Promise<void>;
-  stopAll: () => void;
-  volume: number;
-  setVolume: (newVolume: number) => void;
-};
-
-export function loadInitialBuffers(
-  event: EventData,
-  loadBuffer: (
-    id: string,
-    buffer: ArrayBuffer
-  ) => Promise<undefined | AudioBuffer>
-) {
-  const { files } = event.payload as InitialLoadPayload;
-  const loadFiles = Object.entries(files).map(([id, data]) =>
-    loadBuffer(id, data).then(() => id)
-  );
-  return Promise.all(loadFiles);
-}
-
-export function useBuffers(hostOrGuest: "host" | "guest"): Buffers {
+export function useBuffers(hostOrGuest: "host" | "guest") {
   const { context, unlock } = useAudioContext();
   const [buffers, setBuffers] = useState<Record<string, AudioBuffer>>({});
   const bufferSources = useRef<Record<string, AudioBufferSourceNode>>({});
