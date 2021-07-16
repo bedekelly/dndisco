@@ -1,10 +1,12 @@
 import "./UploadPad.css";
 import { useDropzone } from "react-dropzone";
 import React, { useState } from "react";
+import TextLoader from "../../atoms/TextLoader";
 
 type UploadPadProps = {
   play: () => void;
   stop: () => void;
+  loading: boolean;
   onLoadFile: (file: File) => void;
   fileName: string | null;
 };
@@ -14,6 +16,7 @@ export default function UploadPad({
   stop,
   onLoadFile,
   fileName,
+  loading,
 }: UploadPadProps) {
   const [draggingOverPad, setDraggingOverPad] = useState(false);
   const {
@@ -30,6 +33,7 @@ export default function UploadPad({
 
   const dragging = draggingOverInput || draggingOverPad;
   const fullSizeInput = dragging || !fileName ? styles.fullHeight : "";
+  console.log({ fileName, loading });
 
   return (
     <div
@@ -44,17 +48,27 @@ export default function UploadPad({
       >
         <p className={styles.padName}>{fileName}</p>
       </button>
-      {fileName && (
+      {fileName && !loading && (
         <button className={styles.stop} aria-label="stop" onClick={stop}>
           <i className="block bg-white w-2.5 h-2.5 rounded-sm text-center" />
         </button>
       )}
+
       <button
         {...getRootProps({})}
         className={`${styles.uploadSound} ${fullSizeInput}`}
       >
         <input {...getInputProps()} />
-        {dragging ? <p>Drop your sound!</p> : <p>Upload a sound...</p>}
+        {loading ? (
+          <>
+            Loading
+            <TextLoader />
+          </>
+        ) : dragging ? (
+          <p>Drop your sound!</p>
+        ) : (
+          <p>Upload a sound...</p>
+        )}
       </button>
     </div>
   );

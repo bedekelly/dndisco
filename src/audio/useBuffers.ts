@@ -1,7 +1,6 @@
 import { useAudioContext } from "./AudioContextProvider";
 import { useCallback, useRef, useState } from "react";
 import decodeAudioFile from "./decodeAudioFile";
-import { v4 as uuid } from "uuid";
 import useVisualisedDestination from "./useVisualisedDestination";
 
 export type BufferLoadedInfo = {

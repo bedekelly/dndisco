@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useLocation } from "wouter";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { BufferLoadedInfo, useBuffers } from "../../../audio/useBuffers";
@@ -15,17 +14,20 @@ function makeInitialPads(): Pad[] {
     .map(() => ({
       filename: null,
       soundID: null,
+      loading: false,
     }));
 }
 
 type EmptyPad = {
   soundID: null;
   filename: null;
+  loading: boolean;
 };
 
 type PopulatedPad = {
   soundID: string;
   filename: string;
+  loading: false;
 };
 
 type Pad = EmptyPad | PopulatedPad;
@@ -59,11 +61,17 @@ function usePads(
   async function onLoadFile(padIndex: number, file: File) {
     // Todo: upload file in parallel.
     console.log({ padIndex, file });
+    setPads((oldPads) => {
+      const newPads = [...oldPads];
+      newPads[padIndex] = { filename: null, soundID: null, loading: true };
+      return newPads;
+    });
+    console.log("set pads done");
     const soundID = await uploadFile(file);
     await audio.loadBufferFromFile(file, soundID);
     setPads((oldPads) => {
       const newPads = [...oldPads];
-      newPads[padIndex] = { filename: file.name, soundID };
+      newPads[padIndex] = { filename: file.name, soundID, loading: false };
       return newPads;
     });
   }
@@ -79,9 +87,11 @@ type HostUIProps = {
 
 function useUpload(sessionID: string) {
   return (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
     return fetch(`${apiURL}/upload-audio/${sessionID}`, {
       method: "POST",
-      body: file,
+      body: formData,
     })
       .then((response) => response.json())
       .then(({ soundID }) => soundID);
@@ -104,6 +114,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
             stop={() => stopPad(i)}
             onLoadFile={(file) => onLoadFile(i, file)}
             fileName={pad.filename}
+            loading={pad.loading}
           />
         ))}
       </ScreenCenter>
