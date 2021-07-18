@@ -53,12 +53,10 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
     uploadFile,
     loadSounds
   );
-  const playlistProps = usePlaylist(audio, uploadFile);
 
   const { serverFiles$ } = useHostSocket(sessionID);
   useSubscribe(serverFiles$, onServerFiles);
-
-  // Todo: remove playlist testing code
+  const playlistProps = usePlaylist(audio, uploadFile);
 
   return (
     <UnlockAudio>

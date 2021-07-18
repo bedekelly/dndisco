@@ -87,6 +87,9 @@ export default function usePads(
       );
     }
     loadAllPads();
+    return () => {
+      loadedPads.current?.clear();
+    };
   }, [pads, loadSounds, setPads]);
 
   function playPad(i: number) {
