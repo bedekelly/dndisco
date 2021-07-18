@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { BufferLoadedInfo } from "../../../audio/useBuffers";
 import { ISong } from "../../molecules/Song";
 import { PlaylistProps } from "./Playlist";
@@ -10,13 +10,32 @@ type PlaylistAudio = {
   onCompleted(songID: string): Promise<unknown>;
 };
 
+export function useStateWithCallback<T>(
+  defaultState: T | (() => T)
+): readonly [T, Dispatch<SetStateAction<T>>, () => Promise<T>] {
+  const [state, setState] = useState<T>(defaultState);
+
+  const getState = useCallback(async () => {
+    return new Promise<T>((resolve) => {
+      setState((oldValue) => {
+        resolve(oldValue);
+        return oldValue;
+      });
+    });
+  }, []);
+
+  return [state, setState, getState] as const;
+}
+
 export default function usePlaylist(
   audio: PlaylistAudio,
   uploadFile: (file: File) => Promise<string>
 ): PlaylistProps {
-  const [playingID, setPlayingID] = useState<string | null>(null);
+  const [playingID, setPlayingID, getPlayingID] = useStateWithCallback<
+    string | null
+  >(null);
   const [loading, setLoading] = useState(0);
-  const [songs, setSongs] = useState<ISong[]>([]);
+  const [songs, setSongs, getSongs] = useStateWithCallback<ISong[]>([]);
 
   async function appendFiles(songs: File[]) {
     setLoading((loading) => loading + songs.length);
@@ -57,15 +76,34 @@ export default function usePlaylist(
     setPlayingID(songID);
     await audio.playBuffer(songID);
 
-    audio.onCompleted(songID).then(() => {
-      setPlayingID((playingID) => (playingID === songID ? null : playingID));
+    audio.onCompleted(songID).then(async () => {
+      const currentlyPlaying = await getPlayingID();
+      console.log({ currentlyPlaying, songID });
+
+      // Check if song was manually stopped or another track was chosen.
+      if (currentlyPlaying !== songID) return;
+
+      // Here, we know that the track has finished organically.
+      const playlist = await getSongs();
+      const thisSongIndex = playlist.findIndex(
+        (track) => track.songID === currentlyPlaying
+      );
+
+      // If it's the end, don't queue another song.
+      if (thisSongIndex >= playlist.length - 1) {
+        setPlayingID(null);
+      } else {
+        setTimeout(() => {
+          playSong(playlist[thisSongIndex + 1].songID);
+        }, 0);
+      }
     });
   }
 
   function stopSong(songID: string) {
     console.log("stop", songID);
-    audio.stopBuffer(songID);
     setPlayingID(null);
+    audio.stopBuffer(songID);
   }
 
   return {

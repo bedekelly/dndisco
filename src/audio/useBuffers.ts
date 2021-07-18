@@ -1,7 +1,8 @@
 import { useAudioContext } from "./AudioContextProvider";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import decodeAudioFile from "./decodeAudioFile";
 import useVisualisedDestination from "./useVisualisedDestination";
+import { useStateWithCallback } from "../components/organisms/Playlist/usePlaylist";
 
 export type BufferLoadedInfo = {
   encodedData: ArrayBuffer;
@@ -12,7 +13,9 @@ export type BufferLoadedInfo = {
 
 export function useBuffers(hostOrGuest: "host" | "guest") {
   const { context, unlock } = useAudioContext();
-  const [buffers, setBuffers] = useState<Record<string, AudioBuffer>>({});
+  const [buffers, setBuffers, getBuffers] = useStateWithCallback<
+    Record<string, AudioBuffer>
+  >({});
   const bufferSources = useRef<Record<string, AudioBufferSourceNode>>({});
   const {
     destination,
@@ -42,7 +45,7 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
         setBuffers((buffers) => ({ ...buffers, [soundID]: decodedData }));
       });
     },
-    [context]
+    [context, setBuffers]
   );
 
   async function unlockIfNeeded(offset: number) {
@@ -73,7 +76,7 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     const bufferSource = context.createBufferSource();
     bufferSources.current[soundID]?.disconnect();
     bufferSources.current[soundID] = bufferSource;
-    bufferSource.buffer = buffers[soundID];
+    bufferSource.buffer = (await getBuffers())[soundID];
     bufferSource.connect(destination);
     bufferSource.start(0, delayedOffset);
   }
