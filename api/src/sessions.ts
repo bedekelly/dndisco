@@ -18,7 +18,7 @@ const sessions: Record<SessionID, Session> = {};
  */
 function makeSession(sessionID: string): Session {
   return {
-    files: ["3164ed33-f7c1-49df-a9bf-12f6aac4dbf5"],
+    files: [],
     host: null,
     sockets: {},
     clientFiles: {},

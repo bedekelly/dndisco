@@ -4,7 +4,7 @@ import fs from "fs-extra";
 import sessions, { getSession } from "./sessions";
 import { randomUUID } from "crypto";
 
-export default function serveAudioFiles(
+export default function setupAPI(
   app: Express,
   updateClientsAndHost: (sessionID: string) => void
 ) {

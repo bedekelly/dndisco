@@ -3,7 +3,7 @@ import http from "http";
 import cors from "cors";
 import connectBusboy from "connect-busboy";
 
-import serveAudioFiles from "./src/serveAudioFiles";
+import setupAPI from "./src/setupAPI";
 import setupWebsockets from "./src/setupWebsockets";
 
 const PORT = 1234;
@@ -14,8 +14,8 @@ expressServer.use(cors());
 expressServer.use(connectBusboy());
 
 const { updateClientsAndHost } = setupWebsockets(httpServer);
-serveAudioFiles(expressServer, updateClientsAndHost);
+setupAPI(expressServer, updateClientsAndHost);
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`Listening on *:${PORT}`);
 });

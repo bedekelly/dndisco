@@ -1,83 +1,14 @@
-import React, { useState } from "react";
+import React from "react";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
-import { BufferLoadedInfo, useBuffers } from "../../../audio/useBuffers";
+import { useBuffers } from "../../../audio/useBuffers";
+import useUpload from "../../../useUpload";
 import ScreenCenter from "../../atoms/ScreenCenter";
 import UploadPad from "../../molecules/UploadPad/UploadPad";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
 import { apiURL } from "../../pages/CreateSession";
-// import Visualizer from "../../molecules/Visualizer/Visualizer";
-
-function makeInitialPads(): Pad[] {
-  return Array(2)
-    .fill(0)
-    .map(() => ({
-      filename: null,
-      soundID: null,
-      loading: false,
-    }));
-}
-
-type EmptyPad = {
-  soundID: null;
-  filename: null;
-  loading: boolean;
-};
-
-type PopulatedPad = {
-  soundID: string;
-  filename: string;
-  loading: false;
-};
-
-type Pad = EmptyPad | PopulatedPad;
-
-type BufferAudio = {
-  playBuffer: (soundID: string) => void;
-  stopBuffer: (soundID: string) => void;
-  loadBufferFromFile: (
-    soundFile: File,
-    soundID: string
-  ) => Promise<BufferLoadedInfo>;
-};
-
-function usePads(
-  audio: BufferAudio,
-  uploadFile: (file: File) => Promise<string>
-) {
-  const [pads, setPads] = useState<Pad[]>(makeInitialPads);
-
-  function playPad(i: number) {
-    const { soundID } = pads[i];
-    if (soundID == null) return;
-    audio.playBuffer(soundID);
-  }
-
-  function stopPad(i: number) {
-    const { soundID } = pads[i];
-    if (soundID) audio.stopBuffer(soundID);
-  }
-
-  async function onLoadFile(padIndex: number, file: File) {
-    // Todo: upload file in parallel.
-    console.log({ padIndex, file });
-    setPads((oldPads) => {
-      const newPads = [...oldPads];
-      newPads[padIndex] = { filename: null, soundID: null, loading: true };
-      return newPads;
-    });
-    console.log("set pads done");
-    const soundID = await uploadFile(file);
-    await audio.loadBufferFromFile(file, soundID);
-    setPads((oldPads) => {
-      const newPads = [...oldPads];
-      newPads[padIndex] = { filename: file.name, soundID, loading: false };
-      return newPads;
-    });
-  }
-
-  return { pads, playPad, stopPad, onLoadFile };
-}
+import usePads from "../Pads/usePads";
+import useHostSocket from "./useHostSocket";
 
 type HostUIProps = {
   params: {
@@ -85,23 +16,42 @@ type HostUIProps = {
   };
 };
 
-function useUpload(sessionID: string) {
-  return (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    return fetch(`${apiURL}/upload-audio/${sessionID}`, {
-      method: "POST",
-      body: formData,
-    })
-      .then((response) => response.json())
-      .then(({ soundID }) => soundID);
+type LoadSounds = {
+  getLoadedSounds: () => string[];
+  loadBuffer: (
+    soundID: string,
+    soundBuffer: ArrayBuffer
+  ) => Promise<AudioBuffer | undefined>;
+};
+
+function useLoadSounds(
+  audio: LoadSounds
+): (soundIDs: string[]) => Promise<AudioBuffer | undefined>[] {
+  return (soundIDs: string[]) => {
+    const allLoadedSounds = new Set(audio.getLoadedSounds());
+    const missingSounds = soundIDs.filter(
+      (soundID) => !allLoadedSounds.has(soundID)
+    );
+    const loadingEverything = missingSounds.map((soundID) =>
+      fetch(`${apiURL}/files/${soundID}`)
+        .then((response) => response.arrayBuffer())
+        .then((arrayBuffer) => audio.loadBuffer(soundID, arrayBuffer))
+    );
+    return loadingEverything;
   };
 }
 
 export default function HostUI({ params: { sessionID } }: HostUIProps) {
   const audio = useBuffers("host");
+  const loadSounds = useLoadSounds(audio);
   const uploadFile = useUpload(sessionID);
-  const { pads, playPad, stopPad, onLoadFile } = usePads(audio, uploadFile);
+  const { pads, playPad, stopPad, onLoadFile } = usePads(
+    audio,
+    uploadFile,
+    loadSounds
+  );
+
+  useHostSocket(sessionID);
 
   return (
     <UnlockAudio>

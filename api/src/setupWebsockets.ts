@@ -13,7 +13,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
   const socketServer = new SocketServer(httpServer, {
     cors: {
       origin: "*",
-      methods: ["GET", "POST"],
+      methods: ["GET", "POST", "PUT", "DELETE"],
     },
   });
 
@@ -47,12 +47,18 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
   socketServer.on("connection", (socket: SocketWithSessionID) => {
     console.log("Connection from ", socket.id);
-    socket.on("hostHello", (sessionID: string) => {
-      socket.sessionID = sessionID;
-      socket.join(sessionID);
-      const session = getSession(sessionID);
-      session.host = socket.id;
-    });
+    socket.on(
+      "hostHello",
+      (sessionID: string, replyWith: (arg: any) => void) => {
+        console.log("got hello from host");
+        socket.sessionID = sessionID;
+        socket.join(sessionID);
+        const session = getSession(sessionID);
+        session.host = socket.id;
+        replyWith(session.files);
+        console.log("replied with", session.files);
+      }
+    );
 
     socket.on("clientHello", (sessionID: string) => {
       console.log("Got hello from client!", socket.id);

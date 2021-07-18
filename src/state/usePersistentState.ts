@@ -8,7 +8,8 @@ import {
 
 export default function usePersistentState<T>(
   key: string,
-  defaultValue: T
+  defaultValue: T | (() => T),
+  preSave: (item: T) => T = (item: T) => item
 ): [T, Dispatch<SetStateAction<T>>, () => void] {
   const [value, setValue] = useState<T>(defaultValue);
 
@@ -26,8 +27,8 @@ export default function usePersistentState<T>(
    * Save every new value.
    */
   useEffect(() => {
-    sessionStorage.setItem(key, JSON.stringify(value));
-  }, [key, value]);
+    sessionStorage.setItem(key, JSON.stringify(preSave(value)));
+  }, [key, preSave, value]);
 
   /**
    * Clear this key from localstorage.

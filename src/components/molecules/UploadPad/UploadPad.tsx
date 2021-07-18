@@ -46,7 +46,16 @@ export default function UploadPad({
         tabIndex={fullSizeInput ? -1 : 0}
         onClick={play}
       >
-        <p className={styles.padName}>{fileName}</p>
+        <p className={styles.padName}>
+          {loading ? (
+            <>
+              Loading
+              <TextLoader />
+            </>
+          ) : (
+            fileName
+          )}
+        </p>
       </button>
       {fileName && !loading && (
         <button className={styles.stop} aria-label="stop" onClick={stop}>

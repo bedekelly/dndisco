@@ -36,10 +36,10 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
   }
 
   const loadBuffer = useCallback(
-    async (id: string, buffer: ArrayBuffer) => {
+    async (soundID: string, buffer: ArrayBuffer) => {
       if (!context || buffer.byteLength === 0) return;
       return context.decodeAudioData(buffer, (decodedData: AudioBuffer) => {
-        setBuffers((buffers) => ({ ...buffers, [id]: decodedData }));
+        setBuffers((buffers) => ({ ...buffers, [soundID]: decodedData }));
       });
     },
     [context]
