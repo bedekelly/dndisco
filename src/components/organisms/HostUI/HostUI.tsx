@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { useBuffers } from "../../../audio/useBuffers";
@@ -41,17 +41,27 @@ function useLoadSounds(
   };
 }
 
+function useSubscribe(producer$: any, callback: any) {
+  useEffect(() => {
+    const subscription = producer$.subscribe(callback);
+    return () => {
+      subscription.unsubscribe();
+    };
+  });
+}
+
 export default function HostUI({ params: { sessionID } }: HostUIProps) {
   const audio = useBuffers("host");
   const loadSounds = useLoadSounds(audio);
   const uploadFile = useUpload(sessionID);
-  const { pads, playPad, stopPad, onLoadFile } = usePads(
+  const { pads, playPad, stopPad, onLoadFile, onServerFiles } = usePads(
     audio,
     uploadFile,
     loadSounds
   );
 
-  useHostSocket(sessionID);
+  const { serverFiles$ } = useHostSocket(sessionID);
+  useSubscribe(serverFiles$, onServerFiles);
 
   return (
     <UnlockAudio>

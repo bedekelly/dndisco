@@ -1,15 +1,17 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { BufferLoadedInfo } from "../../../audio/useBuffers";
 import usePersistentState from "../../../state/usePersistentState";
 
+function makePad() {
+  return {
+    filename: null,
+    soundID: null,
+    loading: false,
+  };
+}
+
 function makeInitialPads(): Pad[] {
-  return Array(2)
-    .fill(0)
-    .map(() => ({
-      filename: null,
-      soundID: null,
-      loading: false,
-    }));
+  return Array(2).fill(0).map(makePad);
 }
 
 type EmptyPad = {
@@ -93,6 +95,20 @@ export default function usePads(
     audio.playBuffer(soundID);
   }
 
+  const onServerFiles = useCallback(
+    function onServerFiles(serverFiles: string[]) {
+      setPads((oldPads) =>
+        oldPads.map((pad) => {
+          if (pad.loading || serverFiles.includes(pad.soundID || "")) {
+            return pad;
+          }
+          return makePad();
+        })
+      );
+    },
+    [setPads]
+  );
+
   function stopPad(i: number) {
     const { soundID } = pads[i];
     if (soundID) audio.stopBuffer(soundID);
@@ -113,5 +129,5 @@ export default function usePads(
     });
   }
 
-  return { pads, playPad, stopPad, onLoadFile };
+  return { pads, playPad, stopPad, onLoadFile, onServerFiles };
 }
