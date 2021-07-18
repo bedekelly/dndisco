@@ -33,7 +33,6 @@ export default function UploadPad({
 
   const dragging = draggingOverInput || draggingOverPad;
   const fullSizeInput = dragging || !fileName ? styles.fullHeight : "";
-  console.log({ fileName, loading });
 
   return (
     <div

@@ -43,7 +43,10 @@ type BufferAudio = {
  * N.B. If the pad is empty, don't set "loading" to true.
  */
 function preSave(pads: Pad[]) {
-  return pads.map((pad) => ({ ...pad, loading: !!pad.soundID }));
+  return pads.map((pad) => ({
+    ...pad,
+    loading: !!pad.soundID,
+  }));
 }
 
 export default function usePads(
@@ -56,7 +59,6 @@ export default function usePads(
     makeInitialPads,
     preSave
   );
-  console.log({ pads });
   const loadedPads = useRef(new Set());
 
   useEffect(() => {
@@ -66,9 +68,7 @@ export default function usePads(
         .map(({ soundID }) => soundID) as string[];
 
       if (!padsToLoad.length) return;
-
-      // Avoid infinite loop.
-      console.log({ loadedPads });
+      if (!pads.some((pad) => pad.loading)) return;
       if (padsToLoad.every((soundID) => loadedPads.current.has(soundID)))
         return;
 
@@ -76,8 +76,13 @@ export default function usePads(
       for (let pad of padsToLoad) {
         loadedPads.current.add(pad);
       }
-      console.log("Set loading false");
-      setPads((oldPads) => oldPads.map((pad) => ({ ...pad, loading: false })));
+      setPads((oldPads) =>
+        oldPads.map((pad) =>
+          pad.soundID && padsToLoad.includes(pad.soundID)
+            ? { ...pad, loading: false }
+            : pad
+        )
+      );
     }
     loadAllPads();
   }, [pads, loadSounds, setPads]);
@@ -94,14 +99,11 @@ export default function usePads(
   }
 
   async function onLoadFile(padIndex: number, file: File) {
-    // Todo: upload file in parallel.
-    console.log({ padIndex, file });
     setPads((oldPads) => {
       const newPads = [...oldPads];
       newPads[padIndex] = { filename: null, soundID: null, loading: true };
       return newPads;
     });
-    console.log("set pads done");
     const soundID = await uploadFile(file);
     await audio.loadBufferFromFile(file, soundID);
     setPads((oldPads) => {
