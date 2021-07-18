@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import zip from "lodash/zip";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { useBuffers } from "../../../audio/useBuffers";
 import useSubscribe from "../../../useSubscribe";
 import useUpload from "../../../useUpload";
 import ScreenCenter from "../../atoms/ScreenCenter";
-import Playlist, { ISong } from "../../molecules/Playlist/Playlist";
+import Playlist from "../../molecules/Playlist/Playlist";
 // import UploadPad from "../../molecules/UploadPad/UploadPad";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
 import { apiURL } from "../../pages/CreateSession";
@@ -91,8 +90,10 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
   }
 
   function deleteSong(index: number) {
-    console.log("delete", index);
-    audio.stopBuffer(songs[index].songID);
+    if (playingSong === songs[index].songID) {
+      audio.stopBuffer(songs[index].songID);
+      setPlayingSong(null);
+    }
     setSongs((oldSongs) => {
       const newSongs = [...oldSongs];
       newSongs.splice(index, 1);
