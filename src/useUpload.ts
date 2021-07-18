@@ -1,6 +1,9 @@
 import { apiURL } from "./components/pages/CreateSession";
 
-export default function useUpload(sessionID: string) {
+type SoundID = string;
+type UploadFile = (file: File) => Promise<SoundID>;
+
+export default function useUpload(sessionID: string): UploadFile {
   return (file: File) => {
     const formData = new FormData();
     formData.append("file", file);

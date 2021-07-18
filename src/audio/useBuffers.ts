@@ -31,7 +31,7 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     );
     const fileName = soundFile.name;
     const { duration } = decodedData;
-    setBuffers({ ...buffers, [soundID]: decodedData });
+    setBuffers((oldBuffers) => ({ ...oldBuffers, [soundID]: decodedData }));
     return { encodedData, soundID, fileName, duration };
   }
 

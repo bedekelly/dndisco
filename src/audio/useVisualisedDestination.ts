@@ -25,7 +25,8 @@ function createPanner(context: AudioContext, pan: number) {
  * debugging, and where a `gain` node is introduced to provide volume control.
  */
 export default function useVisualisedDestination(
-  hostOrGuest: "host" | "guest"
+  hostOrGuest: "host" | "guest",
+  debugWithPan: boolean = false
 ) {
   const { context } = useAudioContext();
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -34,7 +35,10 @@ export default function useVisualisedDestination(
 
   const destination = useMemo(() => {
     if (!context) return;
-    const pan = createPanner(context, hostOrGuest === "host" ? -0.5 : 0.5);
+    const pan = createPanner(
+      context,
+      debugWithPan ? (hostOrGuest === "host" ? -0.5 : 0.5) : 0
+    );
     const delay = context.createDelay();
     const gain = (gainRef.current = context.createGain());
     const analyser = (analyserRef.current = context.createAnalyser());
@@ -45,7 +49,7 @@ export default function useVisualisedDestination(
     gain.connect(analyser);
     analyser.connect(context.destination);
     return pan;
-  }, [context, hostOrGuest]);
+  }, [context, debugWithPan, hostOrGuest]);
 
   /**
    * Update the gain node's volume when the volume state changes.

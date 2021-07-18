@@ -12,6 +12,7 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@types/socket.io-client": "^1.4.36",
+    "lodash": "^4.17.21",
     "prettier": "^2.2.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss7-compat": "npm:@tailwindcss/postcss7-compat",
+    "@types/lodash": "^4.14.171",
     "@types/uuid": "^8.3.0",
     "autoprefixer": "^9",
     "postcss": "^7",
