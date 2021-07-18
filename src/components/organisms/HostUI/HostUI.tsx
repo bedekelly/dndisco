@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { useBuffers } from "../../../audio/useBuffers";
+import useSubscribe from "../../../useSubscribe";
 import useUpload from "../../../useUpload";
 import ScreenCenter from "../../atoms/ScreenCenter";
 import UploadPad from "../../molecules/UploadPad/UploadPad";
@@ -39,15 +40,6 @@ function useLoadSounds(
     );
     return loadingEverything;
   };
-}
-
-function useSubscribe(producer$: any, callback: any) {
-  useEffect(() => {
-    const subscription = producer$.subscribe(callback);
-    return () => {
-      subscription.unsubscribe();
-    };
-  });
 }
 
 export default function HostUI({ params: { sessionID } }: HostUIProps) {
