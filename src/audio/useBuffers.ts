@@ -82,7 +82,9 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
   }
 
   const stopBuffer = useCallback((soundID: string) => {
-    bufferSources.current[soundID]?.disconnect();
+    const bufferSource = bufferSources.current[soundID];
+    bufferSource?.disconnect();
+    if (bufferSource) bufferSource.onended = null;
     delete bufferSources.current[soundID];
   }, []);
 
