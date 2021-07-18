@@ -87,8 +87,10 @@ export default function usePads(
       );
     }
     loadAllPads();
+
+    const loadedPadsCurrent = loadedPads.current;
     return () => {
-      loadedPads.current?.clear();
+      loadedPadsCurrent?.clear();
     };
   }, [pads, loadSounds, setPads]);
 

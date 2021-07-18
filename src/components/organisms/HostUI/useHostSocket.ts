@@ -8,9 +8,7 @@ export default function useHostSocket(sessionID: string) {
   const serverFiles$ = useMemo(() => new Subject<ServerFiles>(), []);
 
   useEffect(() => {
-    console.log("saying hello");
     globalSocket.emit("hostHello", sessionID, (files: any) => {
-      console.log("got reply", { files });
       serverFiles$.next(files);
     });
     return () => {
