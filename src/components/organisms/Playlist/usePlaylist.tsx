@@ -1,9 +1,17 @@
 import { useState } from "react";
+import { BufferLoadedInfo } from "../../../audio/useBuffers";
 import { ISong } from "../../molecules/Song";
 import { PlaylistProps } from "./Playlist";
 
+type PlaylistAudio = {
+  playBuffer(songID: string): Promise<void>;
+  stopBuffer(songID: string): void;
+  loadBufferFromFile(song: File, soundID: string): Promise<BufferLoadedInfo>;
+  onCompleted(songID: string): Promise<unknown>;
+};
+
 export default function usePlaylist(
-  audio: any,
+  audio: PlaylistAudio,
   uploadFile: (file: File) => Promise<string>
 ): PlaylistProps {
   const [playingID, setPlayingID] = useState<string | null>(null);
@@ -41,13 +49,17 @@ export default function usePlaylist(
     });
   }
 
-  function playSong(songID: string) {
+  async function playSong(songID: string) {
     console.log("play", songID);
     if (playingID) {
       stopSong(playingID);
     }
     setPlayingID(songID);
-    audio.playBuffer(songID);
+    await audio.playBuffer(songID);
+
+    audio.onCompleted(songID).then(() => {
+      setPlayingID((playingID) => (playingID === songID ? null : playingID));
+    });
   }
 
   function stopSong(songID: string) {
@@ -56,12 +68,7 @@ export default function usePlaylist(
     setPlayingID(null);
   }
 
-  function playAll() {
-    audio.playBuffer(songs[0].songID);
-  }
-
   return {
-    playAll,
     stopSong,
     playingID,
     songs,

@@ -21,7 +21,6 @@ export type PlaylistProps = {
   deleteSong: (index: number) => void;
   playSong: (songID: string) => void;
   stopSong: (songID: string) => void;
-  playAll: () => void;
   loading: boolean;
 };
 
@@ -32,7 +31,6 @@ export default function Playlist({
   deleteSong,
   playSong,
   stopSong,
-  playAll,
   loading,
 }: PlaylistProps) {
   const songList = useRef<HTMLDivElement | null>(null);

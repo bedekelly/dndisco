@@ -59,6 +59,14 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     return playBufferAtOffset(soundID, 0);
   }
 
+  function onCompleted(soundID: string) {
+    return new Promise((resolve) => {
+      bufferSources.current[soundID].onended = (event) => {
+        resolve(event);
+      };
+    });
+  }
+
   async function playBufferAtOffset(soundID: string, offset: number) {
     if (destination == null) return;
     let delayedOffset = await unlockIfNeeded(offset);
@@ -92,5 +100,6 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     stopAll,
     volume,
     setVolume,
+    onCompleted,
   };
 }

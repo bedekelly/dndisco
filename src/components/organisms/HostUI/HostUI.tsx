@@ -19,7 +19,7 @@ type HostUIProps = {
   };
 };
 
-type LoadSounds = {
+type Audio = {
   getLoadedSounds: () => string[];
   loadBuffer: (
     soundID: string,
@@ -28,7 +28,7 @@ type LoadSounds = {
 };
 
 function useLoadSounds(
-  audio: LoadSounds
+  audio: Audio
 ): (soundIDs: string[]) => Promise<AudioBuffer | undefined>[] {
   return (soundIDs: string[]) => {
     const allLoadedSounds = new Set(audio.getLoadedSounds());
