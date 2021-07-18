@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { useBuffers } from "../../../audio/useBuffers";
