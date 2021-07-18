@@ -11,9 +11,10 @@ import { useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { BigPlay, Plus, BigStop } from "../../atoms/Icons";
 import TextLoader from "../../atoms/TextLoader";
-import Song, { ISong } from "../Song";
+import Song, { ISong } from "../../molecules/Song";
+import usePlaylist from "./usePlaylist";
 
-type PlaylistProps = {
+export type PlaylistProps = {
   playingID: string | null;
   songs: ISong[];
   appendFiles: (newSongs: File[]) => void;
@@ -92,3 +93,5 @@ export default function Playlist({
     </div>
   );
 }
+
+export { usePlaylist };
