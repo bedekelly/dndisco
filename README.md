@@ -19,12 +19,15 @@ $ ./run.sh
 In production, configure the socket server URL manually and use `yarn build` to create a production bundle. Serve the bundle statically using your tool of choice. Run the server as before.
 
 Roadmap:
-- [ ] Host can upload files via drag-n-drop
-- [ ] Host can play pads by clicking them
-- [ ] Host should see a visualisation of the playing audio
+- [x] Host can upload files via drag-n-drop
+- [x] Host can play pads by clicking them
+- [x] Host should see a visualisation of the playing audio
+- [x] Host should see a volume control (just for their audio)
 
-- [ ] Host should have a randomly generated ID pushed to the URL
-- [ ] When the page reloads, host should keep the same pads.
+- [x] Host should have a randomly generated ID pushed to the URL
+- [x] When the page reloads, host should keep the same pads.
+- [ ] When the page reloads 1 time, host's file downloads should be instant
+- [x] When the page reloads N+1 times, host's file downloads should be instant
 
 - [ ] Clients should see a visualiser and a volume control
 - [ ] Clients should download all initial sounds used by the host
