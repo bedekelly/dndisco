@@ -36,7 +36,9 @@ export default function setupWebsockets(httpServer: HTTPServer) {
    */
   function updateClients(sessionID: string) {
     const { host, files } = getSession(sessionID);
+    console.log("updating clients");
     if (!host) return;
+    console.log("updating clients 1");
     socketServer.to(sessionID).except(host).emit("filesUpdate", files);
   }
 
@@ -47,26 +49,26 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
   socketServer.on("connection", (socket: SocketWithSessionID) => {
     console.log("Connection from ", socket.id);
-    socket.on(
-      "hostHello",
-      (sessionID: string, replyWith: (arg: any) => void) => {
+    socket.emit("whoAreYou", (sessionID: string, role: "host" | "guest") => {
+      console.log("got whoareyou response", sessionID, role);
+      if (role === "host") {
         console.log("got hello from host");
         socket.sessionID = sessionID;
         socket.join(sessionID);
         const session = getSession(sessionID);
         session.host = socket.id;
-        replyWith(session.files);
+        socket.emit("filesUpdate", session.files);
         console.log("replied with", session.files);
+      } else if (role === "guest") {
+        console.log("Got hello from client!", socket.id, sessionID, role);
+        socket.sessionID = sessionID;
+        socket.join(sessionID);
+        const session = getSession(sessionID);
+        socket.emit("filesUpdate", session.files);
+        console.log("replied with", session.files);
+      } else {
+        console.warn("Role should be either 'host' or 'guest', was " + role);
       }
-    );
-
-    socket.on("clientHello", (sessionID: string) => {
-      console.log("Got hello from client!", socket.id);
-      socket.sessionID = sessionID;
-      socket.join(sessionID);
-      const session = getSession(sessionID);
-      socket.emit("filesUpdate", session.files);
-      console.log("replied with", session.files);
     });
 
     socket.on("gotFiles", (files) => {
@@ -81,7 +83,10 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
     socket.on("play", (soundID: string) => {
       const { sessionID } = socket;
-      if (!sessionID) return;
+      if (!sessionID) {
+        console.warn("Got play message from socket without a sessionID");
+        return;
+      }
       console.log("Playing", soundID);
       socket.to(sessionID).emit("play", soundID);
     });

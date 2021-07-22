@@ -31,7 +31,14 @@ const fetchSound = (soundID: string) =>
 
 function useNetworkSound(audio: Audio, sessionID: string) {
   useEffect(() => {
-    globalSocket.emit("clientHello", sessionID);
+    globalSocket.on(
+      "whoAreYou",
+      (replyWith: (sessionID: string, role: "host" | "guest") => void) => {
+        console.log("hello?");
+        replyWith(sessionID, "guest");
+      }
+    );
+
     globalSocket.on("filesUpdate", async (soundIDs: string[]) => {
       console.log("filesUpdate", soundIDs);
       const loadedSounds = new Set(audio.getLoadedSounds());
@@ -55,6 +62,14 @@ function useNetworkSound(audio: Audio, sessionID: string) {
     globalSocket.on("stop", (soundID: string) => {
       audio.stopBuffer(soundID);
     });
+
+    return () => {
+      globalSocket.off("whoAreYou");
+      globalSocket.off("filesUpdate");
+      globalSocket.off("play");
+      globalSocket.off("stop");
+      globalSocket.close();
+    };
     // Todo: can we memoize `audio` somehow?
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionID]);

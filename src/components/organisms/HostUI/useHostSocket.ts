@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { now } from "lodash";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Subject } from "rxjs";
 import globalSocket from "../../../globalSocket";
 import { Message } from "../../../sharedTypes";
@@ -13,11 +14,16 @@ export default function useHostSocket(
   const serverFiles$ = useMemo(() => new Subject<ServerFiles>(), []);
 
   useEffect(() => {
-    globalSocket.emit("hostHello", sessionID, (files: any) => {
-      serverFiles$.next(files);
-    });
+    globalSocket.on(
+      "whoAreYou",
+      (replyWith: (sessionID: string, role: "host" | "guest") => void) => {
+        console.log("hello?");
+        replyWith(sessionID, "host");
+      }
+    );
     return () => {
-      globalSocket.close();
+      globalSocket.off("whoAreYou");
+      // globalSocket.close();
     };
   }, [serverFiles$, sessionID]);
 
