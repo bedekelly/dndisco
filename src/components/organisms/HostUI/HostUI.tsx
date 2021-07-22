@@ -9,13 +9,12 @@ import Playlist, { usePlaylist } from "../Playlist/Playlist";
 import UploadPad from "../../molecules/UploadPad/UploadPad";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
 import { apiURL } from "../../pages/CreateSession";
-import usePads from "../Pads/usePads";
+import usePads, { makePad } from "../Pads/usePads";
 import useHostSocket from "./useHostSocket";
 import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
 import CopyableLink from "../../molecules/CopyableLink";
 import { Subject } from "rxjs";
 import { Message } from "../../../sharedTypes";
-import onFilesUpdate from "../../../audio/onFilesUpdate";
 
 type HostUIProps = {
   params: {
@@ -52,14 +51,22 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
 
   const messages$ = useSubject<Message>();
 
-  const { pads, playPad, stopPad, onLoadFile, onServerFiles } = usePads(
-    audio,
-    uploadFile,
-    loadSounds,
-    messages$
-  );
+  const {
+    pads,
+    setPads,
+    playPad,
+    stopPad,
+    onLoadFile,
+    onServerFiles,
+  } = usePads(audio, uploadFile, loadSounds, messages$);
 
-  const { serverFiles$ } = useHostSocket(sessionID, messages$, audio);
+  const { serverFiles$ } = useHostSocket(
+    sessionID,
+    messages$,
+    audio,
+    pads,
+    setPads
+  );
   useSubscribe(serverFiles$, onServerFiles);
   const playlistProps = usePlaylist(audio, uploadFile);
 
@@ -83,6 +90,9 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
             loading={pad.loading}
           />
         ))}
+        <button onClick={() => setPads((oldPads) => [...oldPads, makePad()])}>
+          + Pad
+        </button>
         {/* <Playlist {...playlistProps} /> */}
       </ScreenCenter>
       <CopyableLink sessionID={sessionID} />

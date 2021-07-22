@@ -35,6 +35,7 @@ export default async function filesUpdate(
   const loadSoundsStartTime = performance.now();
   const loadedSounds = new Set(audio.getLoadedSounds());
   const soundsToLoad = soundIDs.filter((soundID) => !loadedSounds.has(soundID));
+  console.log({ soundsToLoad });
 
   if (soundsToLoad.length) {
     const allSounds = await produceMap(soundsToLoad, fetchSound);
@@ -51,15 +52,18 @@ export default async function filesUpdate(
     pickBy(
       playing,
       (_val: number, soundID: string) =>
-        firstTime || soundsToLoad.includes(soundID)
+        // If it's the first time we get a files update, trigger *everything* to play.
+        // Otherwise, only touch the sounds we *didn't* have loaded at the start.
+        firstTime || soundsToLoad.includes(soundID) || true
     ),
     (serverOffset) => serverOffset / 1000 + offset
   );
+
   console.log({ adjustedPlaying });
   Object.entries(adjustedPlaying).forEach(([soundID, offset]) => {
     audio.playBufferAtOffset(soundID, offset);
   });
 
   // Let the server know we've got the files we just loaded.
-  globalSocket.emit("gotFiles", newLoadedSounds);
+  if (soundsToLoad.length) globalSocket.emit("gotFiles", newLoadedSounds);
 }

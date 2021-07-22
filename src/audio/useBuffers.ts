@@ -110,13 +110,8 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
   }
 
   async function playBufferAtOffset(soundID: string, offset: number) {
-    console.log("1");
     if (destination == null) return;
-    console.log(2);
-
     let delayedOffset = await unlockIfNeeded(offset);
-    console.log(3);
-
     const bufferSource = context.createBufferSource();
     bufferSources.current[soundID]?.disconnect();
     bufferSources.current[soundID] = bufferSource;

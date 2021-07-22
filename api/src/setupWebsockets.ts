@@ -1,7 +1,7 @@
 import { Server as HTTPServer } from "http";
 import { performance } from "perf_hooks";
 import { Server as SocketServer, Socket } from "socket.io";
-import { getPlayingSounds, getSession } from "./sessions";
+import { getPlayingSounds, getSession, Pad } from "./sessions";
 import { isSubsetOf } from "./utils";
 
 type SocketWithSessionID = Socket & { sessionID?: string };
@@ -60,6 +60,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         const session = getSession(sessionID);
         session.host = socket.id;
         socket.emit("filesUpdate", session.files, getPlayingSounds(session));
+        socket.emit("padsUpdate", session.pads);
         console.log("replied with", session.files);
       } else if (role === "guest") {
         console.log("Got hello from client!", socket.id, sessionID, role);
@@ -77,6 +78,8 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       if (!socket.sessionID) return;
       console.log(`${socket.id} loaded files ${files}`);
       updateHost(socket.sessionID);
+      const session = getSession(socket.sessionID);
+      socket.emit("filesUpdate", session.files, getPlayingSounds(session));
     });
 
     socket.on("disconnect", () => {
@@ -102,6 +105,13 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       delete session.playing[soundID];
       console.log("Stopping", soundID);
       socket.to(sessionID).emit("stop", soundID);
+    });
+
+    socket.on("padUpdate", (pads: Pad[]) => {
+      const session = getSession(socket.sessionID || "");
+      if (!session) return;
+      session.pads = pads;
+      updateHost(session.sessionID);
     });
   });
 

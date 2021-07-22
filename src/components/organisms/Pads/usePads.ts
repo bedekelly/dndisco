@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Subject } from "rxjs";
 import { BufferLoadedInfo } from "../../../audio/useBuffers";
 import usePersistentState from "../../../state/usePersistentState";
 import { Message } from "../../../sharedTypes";
 
-function makePad() {
+export function makePad() {
   return {
     filename: null,
     soundID: null,
@@ -28,7 +28,7 @@ type PopulatedPad = {
   loading: boolean;
 };
 
-type Pad = EmptyPad | PopulatedPad;
+export type Pad = EmptyPad | PopulatedPad;
 
 type BufferAudio = {
   playBuffer: (soundID: string) => void;
@@ -39,31 +39,13 @@ type BufferAudio = {
   ) => Promise<BufferLoadedInfo>;
 };
 
-/**
- * Before saving our pads to localstorage, set their 'loading' property.
- * This means they'll be "loading" by default when the page reloads.
- * When they successfully load, this will be set back to false.
- *
- * N.B. If the pad is empty, don't set "loading" to true.
- */
-function preSave(pads: Pad[]) {
-  return pads.map((pad) => ({
-    ...pad,
-    loading: !!pad.soundID,
-  }));
-}
-
 export default function usePads(
   audio: BufferAudio,
   uploadFile: (file: File) => Promise<string>,
   loadSounds: (soundIDs: string[]) => Promise<(AudioBuffer | undefined)[]>,
   messages: Subject<Message>
 ) {
-  const [pads, setPads] = usePersistentState<Pad[]>(
-    "pads",
-    makeInitialPads,
-    preSave
-  );
+  const [pads, setPads] = useState<Pad[]>(makeInitialPads);
   const loadedPads = useRef(new Set());
 
   useEffect(() => {
@@ -140,5 +122,5 @@ export default function usePads(
     });
   }
 
-  return { pads, playPad, stopPad, onLoadFile, onServerFiles };
+  return { pads, setPads, playPad, stopPad, onLoadFile, onServerFiles };
 }

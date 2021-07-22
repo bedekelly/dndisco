@@ -1,17 +1,20 @@
-import { useEffect, useMemo, useRef } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useRef } from "react";
 import { Subject } from "rxjs";
 import onFilesUpdate from "../../../audio/onFilesUpdate";
 import { Audio } from "../../../audio/useBuffers";
 import globalSocket from "../../../globalSocket";
 import { Message } from "../../../sharedTypes";
 import useSubscribe from "../../../useSubscribe";
+import { Pad } from "../Pads/usePads";
 
 type ServerFiles = string[];
 
 export default function useHostSocket(
   sessionID: string,
   message$: Subject<Message>,
-  audio: Audio
+  audio: Audio,
+  pads: Pad[],
+  setPads: Dispatch<SetStateAction<Pad[]>>
 ) {
   const serverFiles$ = useMemo(() => new Subject<ServerFiles>(), []);
   const firstLoad = useRef(true);
@@ -26,17 +29,28 @@ export default function useHostSocket(
     globalSocket.on(
       "filesUpdate",
       (files: string[], playing: Record<string, number>) => {
-        onFilesUpdate(audio, files, playing, firstLoad.current);
-        firstLoad.current = false;
-        serverFiles$.next(files);
+        onFilesUpdate(audio, files, playing, firstLoad.current).then(() => {
+          firstLoad.current = false;
+          serverFiles$.next(files);
+        });
       }
     );
+    globalSocket.on("padsUpdate", (pads: Pad[]) => {
+      console.log({ pads });
+      setPads(pads);
+    });
     return () => {
       globalSocket.off("whoAreYou");
+      globalSocket.off("filesUpdate");
+      globalSocket.off("padsUpdate");
       globalSocket.close();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverFiles$, sessionID]);
+
+  useEffect(() => {
+    globalSocket.emit("padUpdate", pads);
+  }, [pads]);
 
   useSubscribe(message$, (message: Message) => {
     switch (message.type) {

@@ -22,8 +22,9 @@ function useNetworkSound(audio: Audio, sessionID: string) {
     globalSocket.on(
       "filesUpdate",
       (files: string[], playing: Record<string, number>) => {
-        onFilesUpdate(audio, files, playing, firstLoad.current);
-        firstLoad.current = false;
+        onFilesUpdate(audio, files, playing, firstLoad.current).then(() => {
+          firstLoad.current = false;
+        });
       }
     );
 

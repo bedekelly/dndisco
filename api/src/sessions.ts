@@ -5,6 +5,20 @@ import { Socket } from "socket.io";
 type SessionID = string;
 type SoundID = string;
 
+type EmptyPad = {
+  soundID: null;
+  filename: null;
+  loading: boolean;
+};
+
+type PopulatedPad = {
+  soundID: string;
+  filename: string;
+  loading: boolean;
+};
+
+export type Pad = EmptyPad | PopulatedPad;
+
 export type Session = {
   files: SoundID[];
   host: string | null;
@@ -13,6 +27,7 @@ export type Session = {
   sessionID: string;
   durations: Record<SoundID, number>;
   playing: Record<SoundID, number>;
+  pads: Pad[];
 };
 
 const sessions: Record<SessionID, Session> = {};
@@ -28,6 +43,7 @@ function makeSession(sessionID: string): Session {
     clientFiles: {},
     durations: {},
     playing: {},
+    pads: [],
     sessionID,
   };
 }
