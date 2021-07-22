@@ -15,6 +15,7 @@ import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
 import CopyableLink from "../../molecules/CopyableLink";
 import { Subject } from "rxjs";
 import { Message } from "../../../sharedTypes";
+import onFilesUpdate from "../../../audio/onFilesUpdate";
 
 type HostUIProps = {
   params: {
@@ -58,7 +59,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
     messages$
   );
 
-  const { serverFiles$ } = useHostSocket(sessionID, messages$);
+  const { serverFiles$ } = useHostSocket(sessionID, messages$, audio);
   useSubscribe(serverFiles$, onServerFiles);
   const playlistProps = usePlaylist(audio, uploadFile);
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 import ScreenCenter from "../../atoms/ScreenCenter";
 import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
@@ -6,30 +6,11 @@ import UnlockAudio from "../../../audio/UnlockAudio";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
 import { Audio, useBuffers } from "../../../audio/useBuffers";
 import globalSocket from "../../../globalSocket";
-import { apiURL } from "../../pages/CreateSession";
-import _, { zip } from "lodash";
-
-/**
- * Given a set of inputs and a "producer" function, deliver a map
- * of inputs to outputs when all the outputs are settled.
- */
-async function produceMap<T extends string | number | symbol, U>(
-  inputKeys: T[],
-  producer: (input: T) => Promise<U>
-): Promise<Record<T, U>> {
-  const values = await Promise.all(inputKeys.map(producer));
-  return Object.fromEntries(zip(inputKeys, values));
-}
-
-/**
- * Fetch a sound ID from the server, returning an arraybuffer.
- */
-const fetchSound = (soundID: string) =>
-  fetch(`${apiURL}/files/${soundID}`).then((response) =>
-    response.arrayBuffer()
-  );
+import onFilesUpdate from "../../../audio/onFilesUpdate";
 
 function useNetworkSound(audio: Audio, sessionID: string) {
+  const firstLoad = useRef(true);
+
   useEffect(() => {
     globalSocket.on(
       "whoAreYou",
@@ -40,35 +21,9 @@ function useNetworkSound(audio: Audio, sessionID: string) {
 
     globalSocket.on(
       "filesUpdate",
-      async (soundIDs: string[], playing: Record<string, number>) => {
-        const timestamp = performance.now();
-        console.log("filesUpdate", soundIDs, playing);
-        const loadedSounds = new Set(audio.getLoadedSounds());
-        console.log({ loadedSounds });
-        const soundsToLoad = soundIDs.filter(
-          (soundID) => !loadedSounds.has(soundID)
-        );
-        if (!soundsToLoad.length) return;
-        console.log({ soundsToLoad }, soundsToLoad.length);
-        const allSounds = await produceMap(soundsToLoad, fetchSound);
-        console.log({ allSounds });
-        await audio.loadBuffers(allSounds);
-        const newLoadedSounds = audio.getLoadedSounds();
-        console.log("loaded all buffers", newLoadedSounds);
-
-        const newTime = performance.now();
-        const offset = (newTime - timestamp) / 1000;
-
-        const adjustedPlaying = _.mapValues(
-          _.pick(playing, soundsToLoad),
-          (serverOffset) => serverOffset / 1000 + offset
-        );
-        console.log({ adjustedPlaying });
-        Object.entries(adjustedPlaying).forEach(([soundID, offset]) => {
-          audio.playBufferAtOffset(soundID, offset);
-        });
-
-        globalSocket.emit("gotFiles", newLoadedSounds);
+      (files: string[], playing: Record<string, number>) => {
+        onFilesUpdate(audio, files, playing, firstLoad.current);
+        firstLoad.current = false;
       }
     );
 
