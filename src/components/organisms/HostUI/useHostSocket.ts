@@ -17,13 +17,15 @@ export default function useHostSocket(
     globalSocket.on(
       "whoAreYou",
       (replyWith: (sessionID: string, role: "host" | "guest") => void) => {
-        console.log("hello?");
         replyWith(sessionID, "host");
       }
     );
+    globalSocket.on("filesUpdate", (files: string[]) =>
+      serverFiles$.next(files)
+    );
     return () => {
       globalSocket.off("whoAreYou");
-      // globalSocket.close();
+      globalSocket.close();
     };
   }, [serverFiles$, sessionID]);
 

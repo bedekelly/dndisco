@@ -1,15 +1,18 @@
+import _ from "lodash";
+import { performance } from "perf_hooks";
 import { Socket } from "socket.io";
 
 type SessionID = string;
 type SoundID = string;
 
-type Session = {
+export type Session = {
   files: SoundID[];
   host: string | null;
   clientFiles: Record<string, SoundID[]>;
   sockets: Record<string, Socket>;
   sessionID: string;
-  durations: Record<string, number>;
+  durations: Record<SoundID, number>;
+  playing: Record<SoundID, number>;
 };
 
 const sessions: Record<SessionID, Session> = {};
@@ -24,6 +27,7 @@ function makeSession(sessionID: string): Session {
     sockets: {},
     clientFiles: {},
     durations: {},
+    playing: {},
     sessionID,
   };
 }
@@ -39,3 +43,14 @@ export function getSession(sessionID: string): Session {
 }
 
 export default sessions;
+
+export function getPlayingSounds(session: Session) {
+  session.playing = _.pickBy(session.playing, (lastPlayedTime, soundID) => {
+    const now = performance.now();
+    return now - lastPlayedTime < session.durations[soundID];
+  });
+  return _.mapValues(
+    session.playing,
+    (timestamp) => performance.now() - timestamp
+  );
+}

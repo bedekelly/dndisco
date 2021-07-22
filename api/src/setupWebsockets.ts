@@ -1,6 +1,7 @@
 import { Server as HTTPServer } from "http";
+import { performance } from "perf_hooks";
 import { Server as SocketServer, Socket } from "socket.io";
-import { getSession } from "./sessions";
+import { getPlayingSounds, getSession } from "./sessions";
 import { isSubsetOf } from "./utils";
 
 type SocketWithSessionID = Socket & { sessionID?: string };
@@ -35,11 +36,12 @@ export default function setupWebsockets(httpServer: HTTPServer) {
    * that session except the host.
    */
   function updateClients(sessionID: string) {
-    const { host, files } = getSession(sessionID);
-    console.log("updating clients");
-    if (!host) return;
-    console.log("updating clients 1");
-    socketServer.to(sessionID).except(host).emit("filesUpdate", files);
+    const session = getSession(sessionID);
+    if (!session.host) return;
+    socketServer
+      .to(sessionID)
+      .except(session.host)
+      .emit("filesUpdate", session.files, getPlayingSounds(session));
   }
 
   function updateClientsAndHost(sessionID: string) {
@@ -57,14 +59,14 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         socket.join(sessionID);
         const session = getSession(sessionID);
         session.host = socket.id;
-        socket.emit("filesUpdate", session.files);
+        socket.emit("filesUpdate", session.files, getPlayingSounds(session));
         console.log("replied with", session.files);
       } else if (role === "guest") {
         console.log("Got hello from client!", socket.id, sessionID, role);
         socket.sessionID = sessionID;
         socket.join(sessionID);
         const session = getSession(sessionID);
-        socket.emit("filesUpdate", session.files);
+        socket.emit("filesUpdate", session.files, getPlayingSounds(session));
         console.log("replied with", session.files);
       } else {
         console.warn("Role should be either 'host' or 'guest', was " + role);
@@ -87,6 +89,8 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         console.warn("Got play message from socket without a sessionID");
         return;
       }
+      const session = getSession(sessionID);
+      session.playing[soundID] = performance.now();
       console.log("Playing", soundID);
       socket.to(sessionID).emit("play", soundID);
     });
