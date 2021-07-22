@@ -98,6 +98,8 @@ export default function setupWebsockets(httpServer: HTTPServer) {
     socket.on("stop", (soundID: string) => {
       const { sessionID } = socket;
       if (!sessionID) return;
+      const session = getSession(sessionID);
+      delete session.playing[soundID];
       console.log("Stopping", soundID);
       socket.to(sessionID).emit("stop", soundID);
     });
