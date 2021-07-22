@@ -34,6 +34,9 @@ function useNetworkSound(audio: Audio, sessionID: string) {
     globalSocket.on("stop", (soundID: string) => {
       audio.stopBuffer(soundID);
     });
+    globalSocket.on("stopAll", () => {
+      audio.stopAll();
+    });
 
     return () => {
       globalSocket.off("whoAreYou");

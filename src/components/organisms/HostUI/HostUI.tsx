@@ -15,6 +15,7 @@ import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
 import CopyableLink from "../../molecules/CopyableLink";
 import { Subject } from "rxjs";
 import { Message } from "../../../sharedTypes";
+import StopEverything from "../../atoms/StopEverything";
 
 type HostUIProps = {
   params: {
@@ -70,6 +71,11 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
   useSubscribe(serverFiles$, onServerFiles);
   const playlistProps = usePlaylist(audio, uploadFile);
 
+  function stopEverything() {
+    messages$.next({ type: "stopAll" });
+    audio.stopAll();
+  }
+
   return (
     <UnlockAudio>
       <ScreenCenter>
@@ -96,6 +102,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
         {/* <Playlist {...playlistProps} /> */}
       </ScreenCenter>
       <CopyableLink sessionID={sessionID} />
+      <StopEverything onClick={stopEverything} />
     </UnlockAudio>
   );
 }

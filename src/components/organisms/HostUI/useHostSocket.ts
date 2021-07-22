@@ -60,6 +60,14 @@ export default function useHostSocket(
       }
       case "stop": {
         globalSocket.emit("stop", message.soundID);
+        break;
+      }
+      case "stopAll": {
+        globalSocket.emit("stopAll");
+        break;
+      }
+      default: {
+        console.warn("Unhandled message type:", message);
       }
     }
   });

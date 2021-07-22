@@ -113,6 +113,14 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       session.pads = pads;
       updateHost(session.sessionID);
     });
+
+    socket.on("stopAll", () => {
+      const session = getSession(socket.sessionID || "");
+      if (!session) return;
+
+      session.playing = {};
+      socket.to(session.sessionID).emit("stopAll");
+    });
   });
 
   return { updateClientsAndHost };

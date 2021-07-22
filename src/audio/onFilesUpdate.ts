@@ -1,7 +1,6 @@
-import { mapValues, pick, pickBy, zip } from "lodash";
+import { mapValues, pickBy, zip } from "lodash";
 import { apiURL } from "../components/pages/CreateSession";
 import { Audio } from "../audio/useBuffers";
-import { Socket } from "socket.io-client";
 import globalSocket from "../globalSocket";
 
 /**

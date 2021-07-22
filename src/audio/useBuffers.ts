@@ -25,10 +25,10 @@ export type Audio = {
   ) => Promise<BufferLoadedInfo>;
   playBuffer: (soundID: string) => Promise<void>;
   playBufferAtOffset: (soundID: string, offset: number) => Promise<void>;
-  stopAll?: () => Promise<void>;
-  volume?: number;
-  setVolume?: React.Dispatch<React.SetStateAction<number>>;
-  onCompleted?: (soundID: string) => Promise<unknown>;
+  stopAll: () => Promise<void>;
+  volume: number;
+  setVolume: React.Dispatch<React.SetStateAction<number>>;
+  onCompleted: (soundID: string) => Promise<unknown>;
   loadBuffers: any;
 };
 

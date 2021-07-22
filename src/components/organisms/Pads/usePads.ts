@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Subject } from "rxjs";
 import { BufferLoadedInfo } from "../../../audio/useBuffers";
-import usePersistentState from "../../../state/usePersistentState";
 import { Message } from "../../../sharedTypes";
 
 export function makePad() {
@@ -108,6 +107,11 @@ export default function usePads(
   }
 
   async function onLoadFile(padIndex: number, file: File) {
+    const oldPad = pads[padIndex];
+    if (oldPad.soundID) {
+      messages.next({ type: "stop", soundID: oldPad.soundID });
+      audio.stopBuffer(oldPad.soundID);
+    }
     setPads((oldPads) => {
       const newPads = [...oldPads];
       newPads[padIndex] = { filename: null, soundID: null, loading: true };
