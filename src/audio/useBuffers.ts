@@ -1,5 +1,5 @@
 import { useAudioContext } from "./AudioContextProvider";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useMemo } from "react";
 import decodeAudioFile from "./decodeAudioFile";
 import useVisualisedDestination from "./useVisualisedDestination";
 import { useStateWithCallback } from "../components/organisms/Playlist/usePlaylist";
@@ -11,11 +11,31 @@ export type BufferLoadedInfo = {
   duration: number;
 };
 
+// Todo: improve this type!
+export type Audio = {
+  loadBuffer: (
+    soundID: string,
+    buffer: ArrayBuffer
+  ) => Promise<AudioBuffer | undefined>;
+  stopBuffer: (soundID: string) => void;
+  getVisualizerData?: (oldArray?: Uint8Array | undefined) => Uint8Array;
+  getLoadedSounds: any;
+  loadBufferFromFile?: (
+    soundFile: File,
+    soundID: string
+  ) => Promise<BufferLoadedInfo>;
+  playBuffer: (soundID: string) => Promise<void>;
+  playBufferAtOffset?: (soundID: string, offset: number) => Promise<void>;
+  stopAll?: () => Promise<void>;
+  volume?: number;
+  setVolume?: React.Dispatch<React.SetStateAction<number>>;
+  onCompleted?: (soundID: string) => Promise<unknown>;
+  loadBuffers: any;
+};
+
 export function useBuffers(hostOrGuest: "host" | "guest") {
   const { context, unlock } = useAudioContext();
-  const [buffers, setBuffers, getBuffers] = useStateWithCallback<
-    Record<string, AudioBuffer>
-  >({});
+  const buffers = useRef<Record<string, AudioBuffer>>({});
   const bufferSources = useRef<Record<string, AudioBufferSourceNode>>({});
   const {
     destination,
@@ -34,19 +54,39 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     );
     const fileName = soundFile.name;
     const { duration } = decodedData;
-    setBuffers((oldBuffers) => ({ ...oldBuffers, [soundID]: decodedData }));
+    const oldBuffers = buffers.current;
+    buffers.current = { ...oldBuffers, [soundID]: decodedData };
     return { encodedData, soundID, fileName, duration };
   }
 
   const loadBuffer = useCallback(
     async (soundID: string, buffer: ArrayBuffer) => {
-      if (!context || buffer.byteLength === 0) return;
+      if (!context) {
+        console.warn("Couldn't load buffer; context not available.");
+        return;
+      }
+      if (buffer.byteLength === 0) {
+        console.warn("Couldn't load buffer; byte length is 0.");
+        console.warn({ buffer });
+        return;
+      }
+      console.log("Loading buffer...");
       return context.decodeAudioData(buffer, (decodedData: AudioBuffer) => {
-        setBuffers((buffers) => ({ ...buffers, [soundID]: decodedData }));
+        const oldBuffers = buffers.current;
+        buffers.current = { ...oldBuffers, [soundID]: decodedData };
+        console.log("Loaded.");
       });
     },
-    [context, setBuffers]
+    [context]
   );
+
+  function loadBuffers(buffers: Record<string, ArrayBuffer>) {
+    return Promise.all(
+      Object.entries(buffers).map(([soundID, buffer]) => {
+        return loadBuffer(soundID, buffer);
+      })
+    );
+  }
 
   async function unlockIfNeeded(offset: number) {
     let delayedOffset = offset;
@@ -76,7 +116,7 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     const bufferSource = context.createBufferSource();
     bufferSources.current[soundID]?.disconnect();
     bufferSources.current[soundID] = bufferSource;
-    bufferSource.buffer = (await getBuffers())[soundID];
+    bufferSource.buffer = buffers.current[soundID];
     bufferSource.connect(destination);
     bufferSource.start(0, delayedOffset);
   }
@@ -88,7 +128,7 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     delete bufferSources.current[soundID];
   }, []);
 
-  const getLoadedSounds = useCallback(() => Object.keys(buffers), [buffers]);
+  const getLoadedSounds = useCallback(() => Object.keys(buffers.current), []);
 
   const stopAll = useCallback(async () => {
     Object.keys(bufferSources.current).forEach(stopBuffer);
@@ -106,5 +146,6 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     volume,
     setVolume,
     onCompleted,
+    loadBuffers,
   };
 }

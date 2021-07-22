@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import unlock from "./unlockAudioContext";
 
 type AudioContextInfo = {
@@ -30,6 +36,10 @@ export default function AudioContextProvider({
   const [running, setRunning] = useState(
     audioContext.current?.state === "running"
   );
+
+  useEffect(() => {
+    setRunning(audioContext.current?.state === "running");
+  }, [children]);
 
   const value = {
     unlock: async () => {

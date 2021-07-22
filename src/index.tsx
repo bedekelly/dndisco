@@ -12,9 +12,7 @@ ReactDOM.render(
     <AudioContextProvider>
       <Switch>
         <Route path="/host/:sessionID" component={HostUI} />
-        <Route path="/guest">
-          <GuestUI />
-        </Route>
+        <Route path="/guest/:sessionID" component={GuestUI} />
         <Route>
           <CreateSessionUI />
         </Route>

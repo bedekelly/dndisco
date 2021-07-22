@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
+import { Subject } from "rxjs";
 import { BufferLoadedInfo } from "../../../audio/useBuffers";
 import usePersistentState from "../../../state/usePersistentState";
+import { Message } from "../../../sharedTypes";
 
 function makePad() {
   return {
@@ -54,7 +56,8 @@ function preSave(pads: Pad[]) {
 export default function usePads(
   audio: BufferAudio,
   uploadFile: (file: File) => Promise<string>,
-  loadSounds: (soundIDs: string[]) => Promise<AudioBuffer | undefined>[]
+  loadSounds: (soundIDs: string[]) => Promise<(AudioBuffer | undefined)[]>,
+  messages: Subject<Message>
 ) {
   const [pads, setPads] = usePersistentState<Pad[]>(
     "pads",
@@ -74,7 +77,7 @@ export default function usePads(
       if (padsToLoad.every((soundID) => loadedPads.current.has(soundID)))
         return;
 
-      await Promise.all(loadSounds(padsToLoad));
+      await loadSounds(padsToLoad);
       for (let pad of padsToLoad) {
         loadedPads.current.add(pad);
       }
@@ -97,6 +100,7 @@ export default function usePads(
   function playPad(i: number) {
     const { soundID } = pads[i];
     if (soundID == null) return;
+    messages.next({ type: "play", soundID });
     audio.playBuffer(soundID);
   }
 
@@ -104,7 +108,7 @@ export default function usePads(
     function onServerFiles(serverFiles: string[]) {
       setPads((oldPads) =>
         oldPads.map((pad) => {
-          if (pad.loading || serverFiles.includes(pad.soundID || "")) {
+          if (serverFiles.includes(pad.soundID || "")) {
             return pad;
           }
           return makePad();
@@ -116,7 +120,9 @@ export default function usePads(
 
   function stopPad(i: number) {
     const { soundID } = pads[i];
-    if (soundID) audio.stopBuffer(soundID);
+    if (soundID == null) return;
+    messages.next({ type: "stop", soundID });
+    audio.stopBuffer(soundID);
   }
 
   async function onLoadFile(padIndex: number, file: File) {

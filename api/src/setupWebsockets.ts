@@ -66,6 +66,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       socket.join(sessionID);
       const session = getSession(sessionID);
       socket.emit("filesUpdate", session.files);
+      console.log("replied with", session.files);
     });
 
     socket.on("gotFiles", (files) => {
@@ -76,6 +77,20 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
     socket.on("disconnect", () => {
       console.log("Disconnected:", socket.sessionID);
+    });
+
+    socket.on("play", (soundID: string) => {
+      const { sessionID } = socket;
+      if (!sessionID) return;
+      console.log("Playing", soundID);
+      socket.to(sessionID).emit("play", soundID);
+    });
+
+    socket.on("stop", (soundID: string) => {
+      const { sessionID } = socket;
+      if (!sessionID) return;
+      console.log("Stopping", soundID);
+      socket.to(sessionID).emit("stop", soundID);
     });
   });
 

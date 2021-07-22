@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
-import { useBuffers } from "../../../audio/useBuffers";
+import { useBuffers, Audio } from "../../../audio/useBuffers";
 import useSubscribe from "../../../useSubscribe";
 import useUpload from "../../../useUpload";
 import ScreenCenter from "../../atoms/ScreenCenter";
@@ -12,6 +12,9 @@ import { apiURL } from "../../pages/CreateSession";
 import usePads from "../Pads/usePads";
 import useHostSocket from "./useHostSocket";
 import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
+import CopyableLink from "../../molecules/CopyableLink";
+import { Subject } from "rxjs";
+import { Message } from "../../../sharedTypes";
 
 type HostUIProps = {
   params: {
@@ -19,18 +22,10 @@ type HostUIProps = {
   };
 };
 
-type Audio = {
-  getLoadedSounds: () => string[];
-  loadBuffer: (
-    soundID: string,
-    soundBuffer: ArrayBuffer
-  ) => Promise<AudioBuffer | undefined>;
-};
-
 function useLoadSounds(
   audio: Audio
-): (soundIDs: string[]) => Promise<AudioBuffer | undefined>[] {
-  return (soundIDs: string[]) => {
+): (soundIDs: string[]) => Promise<(AudioBuffer | undefined)[]> {
+  return async (soundIDs: string[]) => {
     const allLoadedSounds = new Set(audio.getLoadedSounds());
     const missingSounds = soundIDs.filter(
       (soundID) => !allLoadedSounds.has(soundID)
@@ -40,21 +35,30 @@ function useLoadSounds(
         .then((response) => response.arrayBuffer())
         .then((arrayBuffer) => audio.loadBuffer(soundID, arrayBuffer))
     );
-    return loadingEverything;
+    return Promise.all(loadingEverything);
   };
+}
+
+function useSubject<T>() {
+  const [subject] = useState(() => new Subject<T>());
+  return subject;
 }
 
 export default function HostUI({ params: { sessionID } }: HostUIProps) {
   const audio = useBuffers("host");
   const loadSounds = useLoadSounds(audio);
   const uploadFile = useUpload(sessionID);
+
+  const messages$ = useSubject<Message>();
+
   const { pads, playPad, stopPad, onLoadFile, onServerFiles } = usePads(
     audio,
     uploadFile,
-    loadSounds
+    loadSounds,
+    messages$
   );
 
-  const { serverFiles$ } = useHostSocket(sessionID);
+  const { serverFiles$ } = useHostSocket(sessionID, messages$);
   useSubscribe(serverFiles$, onServerFiles);
   const playlistProps = usePlaylist(audio, uploadFile);
 
@@ -78,8 +82,9 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
             loading={pad.loading}
           />
         ))}
-        <Playlist {...playlistProps} />
+        {/* <Playlist {...playlistProps} /> */}
       </ScreenCenter>
+      <CopyableLink sessionID={sessionID} />
     </UnlockAudio>
   );
 }

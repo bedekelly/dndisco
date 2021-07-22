@@ -25,20 +25,30 @@ export default function setupAPI(
    * The host should be able to upload audio files. These files
    * should have a UUID generated for them, which will be used
    * to look them up in the filesystem and over the network.
+   * The browser also calculates the duration of the file in ms.
    */
   app.post("/upload-audio/:sessionID", (request, response) => {
     request.pipe(request.busboy);
     const { sessionID } = request.params;
+    const session = getSession(sessionID);
+    const soundID = uuid();
+
+    request.busboy.on("field", (fieldName: string, fieldValue: string) => {
+      if (fieldName !== "duration") {
+        console.warn("Unknown fieldname specified:", fieldName);
+      }
+      let durationMS = parseInt(fieldValue, 10);
+      session.durations[soundID] = durationMS;
+    });
+
     request.busboy.on("file", (_fieldname, file, filename) => {
-      const soundID = uuid();
       console.log("Uploading", filename, "as", soundID);
       const fileStream = fs.createWriteStream("files/" + soundID);
       file.pipe(fileStream);
-      fileStream.on("close", () => {
-        // For future implementation, it's v important that this
-        // `push` operation is synchronous, so we don't call
-        // updateClients too early!
-        sessions[sessionID].files.push(soundID);
+
+      fileStream.on("close", async () => {
+        // Future implementation: this *must* be synchronous.
+        session.files.push(soundID);
         updateClientsAndHost(sessionID);
         response.send({ soundID });
         console.log("Completed upload of", filename, "as", soundID);

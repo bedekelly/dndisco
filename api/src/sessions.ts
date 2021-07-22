@@ -9,6 +9,7 @@ type Session = {
   clientFiles: Record<string, SoundID[]>;
   sockets: Record<string, Socket>;
   sessionID: string;
+  durations: Record<string, number>;
 };
 
 const sessions: Record<SessionID, Session> = {};
@@ -22,6 +23,7 @@ function makeSession(sessionID: string): Session {
     host: null,
     sockets: {},
     clientFiles: {},
+    durations: {},
     sessionID,
   };
 }
