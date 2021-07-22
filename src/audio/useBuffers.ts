@@ -1,8 +1,7 @@
 import { useAudioContext } from "./AudioContextProvider";
-import { useCallback, useRef, useMemo } from "react";
+import { useCallback, useRef } from "react";
 import decodeAudioFile from "./decodeAudioFile";
 import useVisualisedDestination from "./useVisualisedDestination";
-import { useStateWithCallback } from "../components/organisms/Playlist/usePlaylist";
 
 export type BufferLoadedInfo = {
   encodedData: ArrayBuffer;
