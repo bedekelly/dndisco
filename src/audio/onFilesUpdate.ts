@@ -1,6 +1,6 @@
 import { mapValues, pickBy, zip } from "lodash";
-import { apiURL } from "../components/pages/CreateSession";
-import { Audio } from "../audio/useBuffers";
+import { apiURL } from "../network/api";
+import { AudioControls } from "../audio/useBuffers";
 import globalSocket from "../globalSocket";
 
 /**
@@ -24,7 +24,7 @@ const fetchSound = (soundID: string) =>
   );
 
 export default async function filesUpdate(
-  audio: Audio,
+  audio: AudioControls,
   soundIDs: string[],
   playing: Record<string, number>,
   firstTime: boolean

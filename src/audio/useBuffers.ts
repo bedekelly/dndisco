@@ -11,7 +11,7 @@ export type BufferLoadedInfo = {
 };
 
 // Todo: improve this type!
-export type Audio = {
+export type AudioControls = {
   loadBuffer: (
     soundID: string,
     buffer: ArrayBuffer

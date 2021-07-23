@@ -1,12 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { apiURL } from "../../network/api";
 import ScreenCenter from "../atoms/ScreenCenter";
 import TextLoader from "../atoms/TextLoader";
-
-export const apiURL = (process.env.REACT_APP_API_URL as string).replaceAll(
-  '"',
-  ""
-);
 
 function getSessionID() {
   return fetch(`${apiURL}/session`, { method: "POST" })

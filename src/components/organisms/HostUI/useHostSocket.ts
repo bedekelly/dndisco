@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef } from "react";
 import { Subject } from "rxjs";
 import onFilesUpdate from "../../../audio/onFilesUpdate";
-import { Audio } from "../../../audio/useBuffers";
+import { AudioControls } from "../../../audio/useBuffers";
 import globalSocket from "../../../globalSocket";
 import { Message } from "../../../sharedTypes";
 import useSubscribe from "../../../useSubscribe";
@@ -12,7 +12,7 @@ type ServerFiles = string[];
 export default function useHostSocket(
   sessionID: string,
   message$: Subject<Message>,
-  audio: Audio,
+  audio: AudioControls,
   pads: Pad[],
   setPads: Dispatch<SetStateAction<Pad[]>>
 ) {
