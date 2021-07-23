@@ -13,7 +13,10 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { BigPlay, Plus, BigStop } from "../../atoms/Icons";
 import TextLoader from "../../atoms/TextLoader";
 import Song, { ISong } from "../../molecules/Song";
-import usePlaylist from "./usePlaylist";
+import usePlaylist, { PlaylistAudio } from "./usePlaylist";
+import { StopAllMessage } from "../../../network/messages";
+import { Observable } from "rxjs";
+import useSubscribe from "../../../subscriptions/useSubscribe";
 
 export type PlaylistProps = {
   playingID: string | null;
@@ -23,6 +26,7 @@ export type PlaylistProps = {
   deleteSong: (index: number) => void;
   playSong: (songID: string) => void;
   stopSong: (songID: string) => void;
+  stopPlaylist: () => void;
   loading: boolean;
 };
 
@@ -34,16 +38,27 @@ function reorder<T>(list: T[], startIndex: number, endIndex: number) {
 }
 
 export default function Playlist({
-  playingID,
-  songs,
-  setSongs,
-  appendFiles,
-  deleteSong,
-  playSong,
-  stopSong,
-  loading,
-}: PlaylistProps) {
+  audio,
+  uploadFile,
+  stop$,
+}: {
+  audio: PlaylistAudio;
+  uploadFile: any;
+  stop$: Observable<StopAllMessage>;
+}) {
+  const {
+    appendFiles,
+    songs,
+    setSongs,
+    playingID,
+    playSong,
+    stopSong,
+    stopPlaylist,
+    deleteSong,
+    loading,
+  } = usePlaylist(audio, uploadFile);
   const songList = useRef<HTMLDivElement | null>(null);
+  useSubscribe(stop$, stopPlaylist);
 
   const { getRootProps, isDragActive } = useDropzone({
     onDrop: appendFiles,

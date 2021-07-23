@@ -1,31 +1,15 @@
-import { Dispatch, SetStateAction, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { BufferLoadedInfo } from "../../../audio/useBuffers";
+import useStateWithCallback from "../../../state/useStateWithCallback";
 import { ISong } from "../../molecules/Song";
 import { PlaylistProps } from "./Playlist";
 
-type PlaylistAudio = {
+export type PlaylistAudio = {
   playBuffer(songID: string): Promise<void>;
   stopBuffer(songID: string): void;
   loadBufferFromFile(song: File, soundID: string): Promise<BufferLoadedInfo>;
   onCompleted(songID: string): Promise<unknown>;
 };
-
-export function useStateWithCallback<T>(
-  defaultState: T | (() => T)
-): readonly [T, Dispatch<SetStateAction<T>>, () => Promise<T>] {
-  const [state, setState] = useState<T>(defaultState);
-
-  const getState = useCallback(async () => {
-    return new Promise<T>((resolve) => {
-      setState((oldValue) => {
-        resolve(oldValue);
-        return oldValue;
-      });
-    });
-  }, []);
-
-  return [state, setState, getState] as const;
-}
 
 export default function usePlaylist(
   audio: PlaylistAudio,
@@ -101,14 +85,27 @@ export default function usePlaylist(
     });
   }
 
-  function stopSong(songID: string) {
-    console.log("stop", songID);
-    setPlayingID(null);
-    audio.stopBuffer(songID);
-  }
+  const stopSong = useCallback(
+    function stopSong(songID: string) {
+      console.log("stop", songID);
+      setPlayingID(null);
+      audio.stopBuffer(songID);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setPlayingID]
+  );
+
+  const stopPlaylist = useCallback(
+    async function stopPlaylist() {
+      const currentlyPlaying = await getPlayingID();
+      if (currentlyPlaying) stopSong(currentlyPlaying);
+    },
+    [getPlayingID, stopSong]
+  );
 
   return {
     stopSong,
+    stopPlaylist,
     playingID,
     songs,
     setSongs,

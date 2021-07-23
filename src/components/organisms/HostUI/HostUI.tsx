@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { useBuffers } from "../../../audio/useBuffers";
@@ -13,10 +13,11 @@ import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
 import CopyableLink from "../../molecules/CopyableLink";
 import StopEverything from "../../atoms/StopEverything";
 import useLoadSounds from "../../../network/useLoadSounds";
-import { Message } from "../../../network/messages";
+import { Message, StopAllMessage } from "../../../network/messages";
 import useUpload from "../../../network/useUpload";
 import useSubject from "../../../subscriptions/useSubject";
 import useSubscribe from "../../../subscriptions/useSubscribe";
+import { filter, Observable } from "rxjs";
 
 type HostUIProps = {
   params: {
@@ -30,6 +31,13 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
   const uploadFile = useUpload(sessionID);
 
   const messages$ = useSubject<Message>();
+  const stopAll$ = useMemo(
+    () =>
+      messages$.pipe(
+        filter((message) => message.type === "stopAll")
+      ) as Observable<StopAllMessage>,
+    [messages$]
+  );
 
   const {
     pads,
@@ -48,7 +56,6 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
     setPads
   );
   useSubscribe(serverFiles$, onServerFiles);
-  const playlistProps = usePlaylist(audio, uploadFile);
 
   function stopEverything() {
     messages$.next({ type: "stopAll" });
@@ -78,7 +85,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
         <button onClick={() => setPads((oldPads) => [...oldPads, makePad()])}>
           + Pad
         </button> */}
-        <Playlist {...playlistProps} />
+        <Playlist audio={audio} uploadFile={uploadFile} stop$={stopAll$} />
       </ScreenCenter>
       <CopyableLink sessionID={sessionID} />
       <StopEverything onClick={stopEverything} />
