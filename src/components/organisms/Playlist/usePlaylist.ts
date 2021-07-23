@@ -59,6 +59,7 @@ export default function usePlaylist(
   function deleteSong(index: number) {
     if (playingID === songs[index].songID) {
       audio.stopBuffer(songs[index].songID);
+      console.log("stop", songs[index].songID);
       setPlayingID(null);
     }
     setSongs((oldSongs) => {

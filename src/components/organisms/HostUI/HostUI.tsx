@@ -65,7 +65,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
             setValue={(vol) => audio.setVolume(vol)}
           ></VolumeSlider>
         </div>
-        {pads.map((pad, i) => (
+        {/* {pads.map((pad, i) => (
           <UploadPad
             key={i}
             play={() => playPad(i)}
@@ -77,7 +77,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
         ))}
         <button onClick={() => setPads((oldPads) => [...oldPads, makePad()])}>
           + Pad
-        </button>
+        </button> */}
         <Playlist {...playlistProps} />
       </ScreenCenter>
       <CopyableLink sessionID={sessionID} />
