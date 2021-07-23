@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Subject } from "rxjs";
 import { BufferLoadedInfo } from "../../../audio/useBuffers";
-import { Message } from "../../../sharedTypes";
+import { Message } from "../../../network/messages";
 
 export function makePad() {
   return {

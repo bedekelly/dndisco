@@ -1,5 +1,5 @@
-import getAudioFileDuration from "./audio/getAudioFileDuration";
-import { apiURL } from "./network/api";
+import getAudioFileDuration from "../audio/getAudioFileDuration";
+import { apiURL } from "./api";
 
 type SoundID = string;
 type UploadFile = (file: File) => Promise<SoundID>;

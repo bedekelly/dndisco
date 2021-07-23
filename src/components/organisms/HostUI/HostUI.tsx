@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { useBuffers } from "../../../audio/useBuffers";
-import useSubscribe from "../../../useSubscribe";
-import useUpload from "../../../useUpload";
 import ScreenCenter from "../../atoms/ScreenCenter";
 import Playlist, { usePlaylist } from "../Playlist/Playlist";
 import UploadPad from "../../molecules/UploadPad/UploadPad";
@@ -13,21 +11,18 @@ import usePads, { makePad } from "../Pads/usePads";
 import useHostSocket from "./useHostSocket";
 import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
 import CopyableLink from "../../molecules/CopyableLink";
-import { Subject } from "rxjs";
-import { Message } from "../../../sharedTypes";
 import StopEverything from "../../atoms/StopEverything";
 import useLoadSounds from "../../../network/useLoadSounds";
+import { Message } from "../../../network/messages";
+import useUpload from "../../../network/useUpload";
+import useSubject from "../../../subscriptions/useSubject";
+import useSubscribe from "../../../subscriptions/useSubscribe";
 
 type HostUIProps = {
   params: {
     sessionID: string;
   };
 };
-
-function useSubject<T>() {
-  const [subject] = useState(() => new Subject<T>());
-  return subject;
-}
 
 export default function HostUI({ params: { sessionID } }: HostUIProps) {
   const audio = useBuffers("host");
