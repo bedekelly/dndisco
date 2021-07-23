@@ -85,6 +85,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
           + Pad
         </button> */}
         <Playlist audio={audio} uploadFile={uploadFile} stop$={stopAll$} />
+        <Playlist audio={audio} uploadFile={uploadFile} stop$={stopAll$} />
       </ScreenCenter>
       <CopyableLink sessionID={sessionID} />
       <StopEverything onClick={stopEverything} />

@@ -90,11 +90,11 @@ export default function Playlist({
 
   return (
     <div
-      className="text-gray-800 shadow-md rounded-2xl overflow-hidden bg-gradient-to-br from-yellow-700 to-red-700"
+      className="text-gray-800 shadow-md rounded-2xl overflow-hidden bg-gradient-to-br from-yellow-700 to-red-700 m-3"
       {...getRootProps()}
     >
       <div className="flex justify-between px-3 m-3 text-yellow-50">
-        <h1 className="playlist-title py-2 text-2xl font-semibold w-full">
+        <h1 className="playlist-title py-2 text-2xl font-semibold w-full mr-2">
           <ClickableInput value={playlistName} setValue={setPlaylistName} />
           {loading && <TextLoader />}
         </h1>
