@@ -1,5 +1,5 @@
 import client from "socket.io-client";
-import { apiURL } from "./network/api";
+import { apiURL } from "./api";
 
 const globalSocket = client(apiURL);
 

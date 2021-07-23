@@ -1,2 +1,2 @@
 cd api
-node --loader ts-node/esm ./index.ts
+node --loader ts-node/esm src/index.ts

@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useEffect, useMemo, useRef } from "react";
 import { Subject } from "rxjs";
 import onFilesUpdate from "../../../audio/onFilesUpdate";
 import { AudioControls } from "../../../audio/useBuffers";
-import globalSocket from "../../../globalSocket";
+import globalSocket from "../../../network/globalSocket";
 import { Message } from "../../../network/messages";
 import useSubscribe from "../../../subscriptions/useSubscribe";
 import { Pad } from "../../organisms/Pads/usePads";

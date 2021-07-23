@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import onFilesUpdate from "../audio/onFilesUpdate";
 import { AudioControls } from "../audio/useBuffers";
-import globalSocket from "../globalSocket";
+import globalSocket from "./globalSocket";
 
 type NetworkState = "loaded" | "loading" | "disconnected";
 

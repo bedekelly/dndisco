@@ -1,29 +1,10 @@
-import { mapValues, pickBy, zip } from "lodash";
-import { apiURL } from "../network/api";
+import { mapValues, pickBy } from "lodash";
 import { AudioControls } from "../audio/useBuffers";
-import globalSocket from "../globalSocket";
+import globalSocket from "../network/globalSocket";
+import fetchSound from "../network/fetchSound";
+import produceMap from "../utilities/produceMap";
 
-/**
- * Given a set of inputs and a "producer" function, deliver a map
- * of inputs to outputs when all the outputs are settled.
- */
-async function produceMap<T extends string | number | symbol, U>(
-  inputKeys: T[],
-  producer: (input: T) => Promise<U>
-): Promise<Record<T, U>> {
-  const values = await Promise.all(inputKeys.map(producer));
-  return Object.fromEntries(zip(inputKeys, values));
-}
-
-/**
- * Fetch a sound ID from the server, returning an arraybuffer.
- */
-const fetchSound = (soundID: string) =>
-  fetch(`${apiURL}/files/${soundID}`).then((response) =>
-    response.arrayBuffer()
-  );
-
-export default async function filesUpdate(
+export default async function onFilesUpdate(
   audio: AudioControls,
   soundIDs: string[],
   playing: Record<string, number>,

@@ -1,11 +1,3 @@
-/**
- * Requirements for playlists:
- * - Show a list of songs
- * - Show which one is playing
- * - Songs have a delete button
- * - Drag'n'drop new files anywhere in the list
- * - Clicking a song will skip to it
- */
 import { Dispatch, SetStateAction, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -80,7 +72,6 @@ export default function Playlist({
   }, [isDragActive]);
 
   function onReorderDragEnd(result: any) {
-    console.log({ songs, result });
     if (!result.destination) return;
     if (result.destination.index === result.source.index) {
       return;

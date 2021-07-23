@@ -3,8 +3,8 @@ import http from "http";
 import cors from "cors";
 import connectBusboy from "connect-busboy";
 
-import setupAPI from "./src/setupAPI";
-import setupWebsockets from "./src/setupWebsockets";
+import setupAPI from "./setupAPI";
+import setupWebsockets from "./setupWebsockets";
 
 const PORT = 1234;
 const expressServer = express();
