@@ -5,7 +5,7 @@ import { AudioControls } from "../../../audio/useBuffers";
 import globalSocket from "../../../globalSocket";
 import { Message } from "../../../network/messages";
 import useSubscribe from "../../../subscriptions/useSubscribe";
-import { Pad } from "../Pads/usePads";
+import { Pad } from "../../organisms/Pads/usePads";
 
 type ServerFiles = string[];
 

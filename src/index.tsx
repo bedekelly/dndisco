@@ -3,8 +3,8 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import { Route, Switch } from "wouter";
 import AudioContextProvider from "./audio/AudioContextProvider";
-import HostUI from "./components/organisms/HostUI/HostUI";
-import GuestUI from "./components/organisms/GuestUI/GuestUI";
+import HostUI from "./components/pages/HostUI/HostUI";
+import GuestUI from "./components/pages/GuestUI/GuestUI";
 import CreateSessionUI from "./components/pages/CreateSession";
 
 ReactDOM.render(

@@ -3,11 +3,8 @@ import React, { useMemo } from "react";
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { useBuffers } from "../../../audio/useBuffers";
 import ScreenCenter from "../../atoms/ScreenCenter";
-import Playlist, { usePlaylist } from "../Playlist/Playlist";
-import UploadPad from "../../molecules/UploadPad/UploadPad";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
 
-import usePads, { makePad } from "../Pads/usePads";
 import useHostSocket from "./useHostSocket";
 import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
 import CopyableLink from "../../molecules/CopyableLink";
@@ -18,6 +15,8 @@ import useUpload from "../../../network/useUpload";
 import useSubject from "../../../subscriptions/useSubject";
 import useSubscribe from "../../../subscriptions/useSubscribe";
 import { filter, Observable } from "rxjs";
+import usePads from "../../organisms/Pads/usePads";
+import Playlist from "../../organisms/Playlist/Playlist";
 
 type HostUIProps = {
   params: {
