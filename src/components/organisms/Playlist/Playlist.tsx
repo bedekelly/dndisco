@@ -17,6 +17,7 @@ import usePlaylist, { PlaylistAudio } from "./usePlaylist";
 import { StopAllMessage } from "../../../network/messages";
 import { Observable } from "rxjs";
 import useSubscribe from "../../../subscriptions/useSubscribe";
+import ClickableInput from "../../molecules/ClickableInput/ClickableInput";
 
 export type PlaylistProps = {
   playingID: string | null;
@@ -93,23 +94,19 @@ export default function Playlist({
       {...getRootProps()}
     >
       <div className="flex justify-between px-3 m-3 text-yellow-50">
-        <h1
-          className="playlist-title py-2 text-2xl font-semibold"
-          onClick={() => {
-            const newName = prompt("Enter new playlist name:");
-            if (newName != null) setPlaylistName(newName);
-          }}
-        >
-          {playlistName}
+        <h1 className="playlist-title py-2 text-2xl font-semibold w-full">
+          <ClickableInput value={playlistName} setValue={setPlaylistName} />
           {loading && <TextLoader />}
         </h1>
-        <button
-          onClick={() =>
-            playingID ? stopSong(playingID) : playSong(songs[0].songID)
-          }
-        >
-          {!!songs.length && (playingID ? <BigStop /> : <BigPlay />)}
-        </button>
+        {!!songs.length && (
+          <button
+            onClick={() =>
+              playingID ? stopSong(playingID) : playSong(songs[0].songID)
+            }
+          >
+            {playingID ? <BigStop /> : <BigPlay />}
+          </button>
+        )}
       </div>
       <div
         className="playlist-songs mx-px mb-px w-64 h-64 sm:w-96 overflow-y-auto rounded-b-2xl"
