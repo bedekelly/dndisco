@@ -6,9 +6,10 @@
  * - Drag'n'drop new files anywhere in the list
  * - Clicking a song will skip to it
  */
-
-import { useEffect, useRef } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+
 import { BigPlay, Plus, BigStop } from "../../atoms/Icons";
 import TextLoader from "../../atoms/TextLoader";
 import Song, { ISong } from "../../molecules/Song";
@@ -17,6 +18,7 @@ import usePlaylist from "./usePlaylist";
 export type PlaylistProps = {
   playingID: string | null;
   songs: ISong[];
+  setSongs: Dispatch<SetStateAction<ISong[]>>;
   appendFiles: (newSongs: File[]) => void;
   deleteSong: (index: number) => void;
   playSong: (songID: string) => void;
@@ -24,9 +26,17 @@ export type PlaylistProps = {
   loading: boolean;
 };
 
+function reorder<T>(list: T[], startIndex: number, endIndex: number) {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+  return result;
+}
+
 export default function Playlist({
   playingID,
   songs,
+  setSongs,
   appendFiles,
   deleteSong,
   playSong,
@@ -48,6 +58,15 @@ export default function Playlist({
       behavior: "smooth",
     });
   }, [isDragActive]);
+
+  function onReorderDragEnd(result: any) {
+    console.log({ songs, result });
+    if (!result.destination) return;
+    if (result.destination.index === result.source.index) {
+      return;
+    }
+    setSongs(reorder(songs, result.source.index, result.destination.index));
+  }
 
   return (
     <div
@@ -71,16 +90,39 @@ export default function Playlist({
         className="playlist-songs mx-px mb-px w-64 h-64 sm:w-96 overflow-y-auto rounded-b-2xl"
         ref={songList}
       >
-        {songs.map(({ name, songID }, songIndex) => (
-          <Song
-            key={songID}
-            title={name}
-            playing={songID === playingID}
-            playSong={() => playSong(songID)}
-            stopSong={() => stopSong(songID)}
-            deleteSong={() => deleteSong(songIndex)}
-          />
-        ))}
+        <DragDropContext onDragEnd={onReorderDragEnd}>
+          <Droppable droppableId="playlist-todo-changeme">
+            {(provided) => (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                {songs.map(({ name, songID }, songIndex) => (
+                  <Draggable
+                    draggableId={songID}
+                    index={songIndex}
+                    key={songID}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
+                        <Song
+                          key={songID}
+                          title={name}
+                          playing={songID === playingID}
+                          playSong={() => playSong(songID)}
+                          stopSong={() => stopSong(songID)}
+                          deleteSong={() => deleteSong(songIndex)}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
         {isDragActive && (
           <div className="flex items-center w-full text-sm h-12 pl-3 bg-gray-200">
             <Plus />

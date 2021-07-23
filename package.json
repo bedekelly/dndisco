@@ -16,6 +16,7 @@
     "lodash": "^4.17.21",
     "prettier": "^2.2.1",
     "react": "^17.0.1",
+    "react-beautiful-dnd": "^13.1.0",
     "react-dom": "^17.0.1",
     "react-dropzone": "^11.3.1",
     "react-scripts": "4.0.3",
@@ -57,6 +58,7 @@
   "devDependencies": {
     "@tailwindcss/postcss7-compat": "npm:@tailwindcss/postcss7-compat",
     "@types/lodash": "^4.14.171",
+    "@types/react-beautiful-dnd": "^13.1.1",
     "@types/uuid": "^8.3.0",
     "autoprefixer": "^9",
     "postcss": "^7",

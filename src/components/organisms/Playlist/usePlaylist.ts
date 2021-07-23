@@ -111,6 +111,7 @@ export default function usePlaylist(
     stopSong,
     playingID,
     songs,
+    setSongs,
     playSong,
     deleteSong,
     appendFiles,
