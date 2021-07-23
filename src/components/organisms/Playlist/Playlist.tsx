@@ -28,6 +28,8 @@ export type PlaylistProps = {
   stopSong: (songID: string) => void;
   stopPlaylist: () => void;
   loading: boolean;
+  playlistName: string;
+  setPlaylistName: Dispatch<SetStateAction<string>>;
 };
 
 function reorder<T>(list: T[], startIndex: number, endIndex: number) {
@@ -56,6 +58,8 @@ export default function Playlist({
     stopPlaylist,
     deleteSong,
     loading,
+    playlistName,
+    setPlaylistName,
   } = usePlaylist(audio, uploadFile);
   const songList = useRef<HTMLDivElement | null>(null);
   useSubscribe(stop$, stopPlaylist);
@@ -89,8 +93,14 @@ export default function Playlist({
       {...getRootProps()}
     >
       <div className="flex justify-between px-3 m-3 text-yellow-50">
-        <h1 className="plaaylist-title py-2 text-2xl font-semibold">
-          Tension Jazz
+        <h1
+          className="playlist-title py-2 text-2xl font-semibold"
+          onClick={() => {
+            const newName = prompt("Enter new playlist name:");
+            if (newName != null) setPlaylistName(newName);
+          }}
+        >
+          {playlistName}
           {loading && <TextLoader />}
         </h1>
         <button

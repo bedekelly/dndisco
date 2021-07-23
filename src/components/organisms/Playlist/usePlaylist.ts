@@ -18,6 +18,7 @@ export default function usePlaylist(
   const [playingID, setPlayingID, getPlayingID] = useStateWithCallback<
     string | null
   >(null);
+  const [playlistName, setPlaylistName] = useState("New Playlist");
   const [loading, setLoading] = useState(0);
   const [songs, setSongs, getSongs] = useStateWithCallback<ISong[]>([]);
 
@@ -113,5 +114,7 @@ export default function usePlaylist(
     deleteSong,
     appendFiles,
     loading: !!loading,
+    playlistName,
+    setPlaylistName,
   };
 }
