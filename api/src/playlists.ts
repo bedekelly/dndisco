@@ -3,7 +3,8 @@ type SoundID = string;
 export type Playlist = {
   currentlyPlaying: null | {
     soundID: SoundID;
-    playedAt: number;
+    startedAt: number;
+    offset?: number;
   };
   entries: SoundID[];
   name: string;

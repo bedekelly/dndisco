@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioControls, BufferLoadedInfo } from "../../../audio/useBuffers";
 import globalSocket from "../../../network/globalSocket";
 import useLoadSounds from "../../../network/useLoadSounds";
@@ -22,7 +22,7 @@ export type PlaylistEntry = {
 export type Playlist = {
   currentlyPlaying: null | {
     soundID: SoundID;
-    playedAt: number;
+    offset?: number;
   };
   entries: PlaylistEntry[];
   name: string;
@@ -41,8 +41,11 @@ function useNetworkPlaylist(playlistID: string) {
     (newName: string) => {
       setPlaylist((oldPlaylist: Playlist | null) => {
         if (!oldPlaylist) return oldPlaylist;
-        const newPlaylist = { ...oldPlaylist, name: newName };
-        globalSocket.emit("updatePlaylist", playlistID, newPlaylist);
+        const newPlaylist = {
+          ...oldPlaylist,
+          name: newName,
+        };
+        globalSocket.emit("updatePlaylist", playlistID, newPlaylist, false);
         return newPlaylist;
       });
     },
@@ -57,7 +60,7 @@ function useNetworkPlaylist(playlistID: string) {
           ...oldPlaylist,
           entries: getNewEntries(oldPlaylist.entries),
         };
-        globalSocket.emit("updatePlaylist", playlistID, newPlaylist);
+        globalSocket.emit("updatePlaylist", playlistID, newPlaylist, false);
         return newPlaylist;
       });
     },
@@ -68,18 +71,52 @@ function useNetworkPlaylist(playlistID: string) {
     return (await getPlaylist())?.entries;
   }, [getPlaylist]);
 
+  /** Retrieve data about a playlist when the ID changes. */
   useEffect(() => {
     globalSocket.emit("getPlaylist", playlistID, (playlist: Playlist) => {
       setPlaylist(playlist);
     });
   }, [playlistID, setPlaylist]);
 
+  const getPlaying = useCallback(async () => {
+    return (await getPlaylist())?.currentlyPlaying;
+  }, [getPlaylist]);
+
+  const setPlayingID = useCallback(
+    (soundID: string | null, sendUpdate: boolean = true) => {
+      setPlaylist((oldPlaylist: Playlist | null) => {
+        if (!oldPlaylist) return oldPlaylist;
+        const currentlyPlaying =
+          soundID == null
+            ? null
+            : {
+                soundID,
+                // This field is only useful when *loading* from the server,
+                // since the server uses its own monotonic clock.
+              };
+
+        const newPlaylist = {
+          ...oldPlaylist,
+          currentlyPlaying,
+        };
+        if (sendUpdate)
+          globalSocket.emit("updatePlaylist", playlistID, newPlaylist, true);
+        return newPlaylist;
+      });
+    },
+    [playlistID, setPlaylist]
+  );
+
   return {
     playlistName: playlist?.name,
     setPlaylistName,
+    getPlaylist,
     songs: playlist?.entries || noEntries,
     setSongs: setSongs,
     getSongs,
+    getPlaying,
+    playingID: playlist?.currentlyPlaying?.soundID || null,
+    setPlayingID,
   };
 }
 
@@ -88,26 +125,83 @@ export default function usePlaylist(
   playlistID: string,
   uploadFile: (file: File) => Promise<string>
 ): PlaylistProps {
-  const [playingID, setPlayingID, getPlayingID] = useStateWithCallback<
-    string | null
-  >(null);
   const {
     playlistName,
     setPlaylistName,
     songs,
     setSongs,
     getSongs,
+    getPlaying,
+    getPlaylist,
+    playingID,
+    setPlayingID,
   } = useNetworkPlaylist(playlistID);
-  const [loading, setLoading] = useState(0);
 
+  const startPlaying = useCallback(
+    async function startPlaying(loadingOffset: number) {
+      const start = performance.now();
+      const playlist = await getPlaylist();
+      if (!playlist || !playlist.currentlyPlaying) return;
+
+      let { offset: serverOffset, soundID } = playlist.currentlyPlaying;
+      serverOffset = (serverOffset || 0) / 1000; // Todo: shouldn't ever happen.
+
+      let playlistFinished = false;
+
+      console.log({ serverOffset });
+
+      while (serverOffset >= audio.durations[soundID]) {
+        console.log({
+          serverOffset,
+          currentIDDuration: audio.durations[soundID],
+          soundID,
+        });
+        serverOffset -= audio.durations[soundID];
+        // Sure, we're "defining a function inside a loop", but it's invoked immediately.
+        // eslint-disable-next-line
+        let soundIndex = songs.findIndex((song) => song.soundID === soundID);
+        if (!songs[soundIndex + 1]) {
+          playlistFinished = true;
+          break;
+        }
+        soundID = songs[soundIndex + 1].soundID;
+      }
+
+      console.log({ serverOffset });
+
+      if (playlistFinished) return;
+      const end = performance.now();
+
+      console.log(serverOffset + (end - start));
+      console.log({ soundID });
+
+      playSong(soundID, serverOffset + loadingOffset + (end - start), false);
+    },
+    // Todo: playSong is in the dependency array but it's not hoisted.
+    // eslint-disable-next-line
+    [audio.durations, getPlaylist, songs]
+  );
+
+  /**
+   * Load all the sounds used in this playlist.
+   */
+  const [loading, setLoading] = useState(0);
   const loadSounds = useLoadSounds(audio);
   useEffect(() => {
+    const startTime = performance.now();
     setLoading((count) => count + 1);
-    loadSounds(songs.map((entry) => entry.soundID)).then(() => {
-      setLoading((count) => count - 1);
-    });
-  }, [loadSounds, songs]);
+    loadSounds(songs.map((entry) => entry.soundID))
+      .then(() => {
+        setLoading((count) => count - 1);
+      })
+      .then(() => {
+        startPlaying((performance.now() - startTime) / 1000);
+      });
+  }, [loadSounds, songs, startPlaying]);
 
+  /**
+   * Add an array of files to the playlist.
+   */
   async function appendFiles(songs: File[]) {
     setLoading((loading) => loading + songs.length);
     const namesAndIDsAfterUpload = await Promise.all(
@@ -140,42 +234,48 @@ export default function usePlaylist(
     });
   }
 
-  async function playSong(songID: string) {
-    console.log("play", songID);
-    if (playingID) {
-      stopSong(playingID);
-    }
-    setPlayingID(songID);
-    await audio.playBuffer(songID);
-
-    audio.onCompleted(songID).then(async () => {
-      const currentlyPlaying = await getPlayingID();
-      console.log({ currentlyPlaying, songID });
-
-      // Check if song was manually stopped or another track was chosen.
-      if (currentlyPlaying !== songID) return;
-
-      // Here, we know that the track has finished organically.
-      const playlist = await getSongs();
-      console.log({ playlist });
-      const thisSongIndex = playlist?.findIndex(
-        (track) => track.soundID === currentlyPlaying
-      );
-
-      if (
-        !playlist || // Playlist doesn't exist (somehow?)
-        thisSongIndex == null || // Can't find this song any more (somehow?)
-        thisSongIndex >= playlist.length - 1 // Song is at the end of the playlist.
-      ) {
-        setPlayingID(null);
-      } else {
-        setTimeout(() => {
-          const nextSong = playlist[thisSongIndex + 1].soundID;
-          playSong(nextSong);
-        }, 0);
+  const playSong = useCallback(
+    async function playSong(
+      songID: string,
+      offset: number = 0,
+      sendUpdate: boolean = true
+    ) {
+      if (playingID) {
+        stopSong(playingID);
       }
-    });
-  }
+      setPlayingID(songID, sendUpdate);
+      await audio.playBufferAtOffset(songID, offset);
+
+      audio.onCompleted(songID).then(async () => {
+        const currentlyPlaying = (await getPlaying())?.soundID;
+
+        // Check if song was manually stopped or another track was chosen.
+        if (currentlyPlaying !== songID) return;
+
+        // Here, we know that the track has finished organically.
+        const playlist = await getSongs();
+        const thisSongIndex = playlist?.findIndex(
+          (track) => track.soundID === currentlyPlaying
+        );
+
+        if (
+          !playlist || // Playlist doesn't exist (somehow?)
+          thisSongIndex == null || // Can't find this song any more (somehow?)
+          thisSongIndex >= playlist.length - 1 // Song is at the end of the playlist.
+        ) {
+          setPlayingID(null);
+        } else {
+          setTimeout(() => {
+            const nextSong = playlist[thisSongIndex + 1].soundID;
+            playSong(nextSong, 0, true);
+          }, 0);
+        }
+      });
+    },
+    // Todo: stopSong needs to be in the deps array but it isn't hoisted.
+    // eslint-disable-next-line
+    [audio, getPlaying, getSongs, playingID, setPlayingID]
+  );
 
   const stopSong = useCallback(
     function stopSong(songID: string) {
@@ -189,10 +289,10 @@ export default function usePlaylist(
 
   const stopPlaylist = useCallback(
     async function stopPlaylist() {
-      const currentlyPlaying = await getPlayingID();
+      const currentlyPlaying = (await getPlaying())?.soundID;
       if (currentlyPlaying) stopSong(currentlyPlaying);
     },
-    [getPlayingID, stopSong]
+    [getPlaying, stopSong]
   );
 
   return {

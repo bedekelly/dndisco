@@ -2,6 +2,7 @@ import { useAudioContext } from "./AudioContextProvider";
 import { useCallback, useRef } from "react";
 import decodeAudioFile from "./decodeAudioFile";
 import useVisualisedDestination from "./useVisualisedDestination";
+import getAudioFileDurationMS from "./getAudioFileDuration";
 
 export type BufferLoadedInfo = {
   encodedData: ArrayBuffer;
@@ -30,11 +31,13 @@ export type AudioControls = {
   setVolume: React.Dispatch<React.SetStateAction<number>>;
   onCompleted: (soundID: string) => Promise<unknown>;
   loadBuffers: any;
+  durations: Record<string, number>;
 };
 
 export function useBuffers(hostOrGuest: "host" | "guest") {
   const { context, unlock } = useAudioContext();
   const buffers = useRef<Record<string, AudioBuffer>>({});
+  const durations = useRef<Record<string, number>>({});
   const bufferSources = useRef<Record<string, AudioBufferSourceNode>>({});
   const {
     destination,
@@ -54,6 +57,7 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     const fileName = soundFile.name;
     const { duration } = decodedData;
     const oldBuffers = buffers.current;
+    durations.current[soundID] = decodedData.duration;
     buffers.current = { ...oldBuffers, [soundID]: decodedData };
     return { encodedData, soundID, fileName, duration };
   }
@@ -72,6 +76,7 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
       console.log("Loading buffer...");
       return context.decodeAudioData(buffer, (decodedData: AudioBuffer) => {
         const oldBuffers = buffers.current;
+        durations.current[soundID] = decodedData.duration;
         buffers.current = { ...oldBuffers, [soundID]: decodedData };
         console.log("Loaded.");
       });
@@ -146,5 +151,6 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
     setVolume,
     onCompleted,
     loadBuffers,
+    durations: durations.current,
   };
 }

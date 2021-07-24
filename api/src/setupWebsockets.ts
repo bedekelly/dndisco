@@ -152,7 +152,12 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       (playlistID: string, cb: (playlist: Playlist) => void) => {
         const session = getSession(socket.sessionID || "");
         if (!session) return;
-        cb(session.playlists[playlistID]);
+        const playlist = session.playlists[playlistID];
+        const now = performance.now();
+        if (playlist.currentlyPlaying)
+          playlist.currentlyPlaying.offset =
+            performance.now() - (playlist.currentlyPlaying?.startedAt || now);
+        cb(playlist);
       }
     );
 
@@ -161,6 +166,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       (
         playlistID: string,
         newData: Playlist,
+        startOfSong: boolean,
         done?: (playlist: Playlist) => void
       ) => {
         const session = socket.sessionID && getSession(socket.sessionID);
@@ -169,10 +175,13 @@ export default function setupWebsockets(httpServer: HTTPServer) {
           return;
         }
 
+        if (newData.currentlyPlaying && startOfSong) {
+          newData.currentlyPlaying.startedAt = performance.now();
+        }
         session.playlists[playlistID] = newData;
-        console.log(session.playlists[playlistID]);
+        console.log(newData);
+        updateClients(session.sessionID);
         done?.(session.playlists[playlistID]);
-        // Todo: update clients with new playlist data.
       }
     );
 
