@@ -2,7 +2,6 @@ import { useAudioContext } from "./AudioContextProvider";
 import { useCallback, useRef } from "react";
 import decodeAudioFile from "./decodeAudioFile";
 import useVisualisedDestination from "./useVisualisedDestination";
-import getAudioFileDurationMS from "./getAudioFileDuration";
 
 export type BufferLoadedInfo = {
   encodedData: ArrayBuffer;
