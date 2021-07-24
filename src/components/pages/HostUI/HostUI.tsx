@@ -15,9 +15,9 @@ import useUpload from "../../../network/useUpload";
 import useSubject from "../../../subscriptions/useSubject";
 import useSubscribe from "../../../subscriptions/useSubscribe";
 import { filter, Observable } from "rxjs";
-import usePads from "../../organisms/Pads/usePads";
-import Playlist from "../../organisms/Playlist/Playlist";
+import usePads, { makePad } from "../../organisms/Pads/usePads";
 import Playlists from "../../organisms/Playlists/Playlists";
+import UploadPad from "../../molecules/UploadPad/UploadPad";
 
 type HostUIProps = {
   params: {
@@ -72,7 +72,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
             setValue={(vol) => audio.setVolume(vol)}
           ></VolumeSlider>
         </div>
-        {/* {pads.map((pad, i) => (
+        {pads.map((pad, i) => (
           <UploadPad
             key={i}
             play={() => playPad(i)}
@@ -84,7 +84,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
         ))}
         <button onClick={() => setPads((oldPads) => [...oldPads, makePad()])}>
           + Pad
-        </button> */}
+        </button>
         <Playlists audio={audio} uploadFile={uploadFile} stopAll$={stopAll$} />
       </ScreenCenter>
       <CopyableLink sessionID={sessionID} />

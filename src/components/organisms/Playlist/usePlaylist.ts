@@ -3,8 +3,6 @@ import { AudioControls, BufferLoadedInfo } from "../../../audio/useBuffers";
 import globalSocket from "../../../network/globalSocket";
 import useLoadSounds from "../../../network/useLoadSounds";
 import useStateWithCallback from "../../../state/useStateWithCallback";
-import useSubject from "../../../subscriptions/useSubject";
-import { ISong } from "../../molecules/Song";
 import { PlaylistProps } from "./Playlist";
 
 export type PlaylistAudio = {
