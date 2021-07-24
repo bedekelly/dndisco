@@ -70,7 +70,7 @@ export default function ClickableInput({
         onKeyPress={(e) => {
           if (e.key === "Enter") {
             onBlur();
-          } else console.log(e.key);
+          }
         }}
       />
     );
