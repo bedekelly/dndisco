@@ -3,6 +3,8 @@ import { performance } from "perf_hooks";
 import { Server as SocketServer, Socket } from "socket.io";
 import { getPlayingSounds, getSession, Pad } from "./sessions";
 import { isSubsetOf } from "./utils";
+import { randomUUID } from "crypto";
+import { makePlaylist, Playlist } from "./playlists";
 
 type SocketWithSessionID = Socket & { sessionID?: string };
 
@@ -113,6 +115,54 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       session.pads = pads;
       updateHost(session.sessionID);
     });
+
+    socket.on("createPlaylist", (cb: (playlistID: string) => void) => {
+      const playlistID = randomUUID();
+      console.log("Creating playlist", playlistID);
+      const { sessionID } = socket;
+      if (!sessionID) {
+        console.warn("Tried to create a playlist without a session ID");
+        return;
+      }
+      const session = getSession(sessionID);
+      session.playlists[playlistID] = makePlaylist();
+      cb(playlistID);
+    });
+
+    socket.on("getPlaylists", (cb: (playlists: string[]) => void) => {
+      const session = socket.sessionID && getSession(socket.sessionID);
+      if (!session) return;
+      cb(Object.keys(session.playlists));
+    });
+
+    socket.on(
+      "getPlaylist",
+      (playlistID: string, cb: (playlist: Playlist) => void) => {
+        const session = getSession(socket.sessionID || "");
+        if (!session) return;
+        cb(session.playlists[playlistID]);
+      }
+    );
+
+    socket.on(
+      "updatePlaylist",
+      (
+        playlistID: string,
+        newData: Playlist,
+        done?: (playlist: Playlist) => void
+      ) => {
+        const session = socket.sessionID && getSession(socket.sessionID);
+        if (!session) {
+          console.warn("Tried to update playlist without a session.");
+          return;
+        }
+
+        session.playlists[playlistID] = newData;
+        console.log(session.playlists[playlistID]);
+        done?.(session.playlists[playlistID]);
+        // Todo: update clients with new playlist data.
+      }
+    );
 
     socket.on("stopAll", () => {
       const session = getSession(socket.sessionID || "");

@@ -1,5 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BufferLoadedInfo } from "../../../audio/useBuffers";
+import globalSocket from "../../../network/globalSocket";
 import useStateWithCallback from "../../../state/useStateWithCallback";
 import { ISong } from "../../molecules/Song";
 import { PlaylistProps } from "./Playlist";
@@ -11,16 +12,93 @@ export type PlaylistAudio = {
   onCompleted(songID: string): Promise<unknown>;
 };
 
+type SoundID = string;
+
+export type PlaylistEntry = {
+  name: string;
+  soundID: string;
+};
+
+export type Playlist = {
+  currentlyPlaying: null | {
+    soundID: SoundID;
+    playedAt: number;
+  };
+  entries: PlaylistEntry[];
+  name: string;
+};
+
+const noEntries: PlaylistEntry[] = [];
+
+function useNetworkPlaylist(playlistID: string) {
+  const [
+    playlist,
+    setPlaylist,
+    getPlaylist,
+  ] = useStateWithCallback<null | Playlist>(null);
+
+  const setPlaylistName = useCallback(
+    (newName: string) => {
+      setPlaylist((oldPlaylist: Playlist | null) => {
+        if (!oldPlaylist) return oldPlaylist;
+        const newPlaylist = { ...oldPlaylist, name: newName };
+        globalSocket.emit("updatePlaylist", playlistID, newPlaylist);
+        return newPlaylist;
+      });
+    },
+    [playlistID, setPlaylist]
+  );
+
+  const setSongs = useCallback(
+    (getNewEntries: (oldEntries: PlaylistEntry[]) => PlaylistEntry[]) => {
+      setPlaylist((oldPlaylist: Playlist | null) => {
+        if (!oldPlaylist) return oldPlaylist;
+        const newPlaylist = {
+          ...oldPlaylist,
+          entries: getNewEntries(oldPlaylist.entries),
+        };
+        globalSocket.emit("updatePlaylist", playlistID, newPlaylist);
+        return newPlaylist;
+      });
+    },
+    [playlistID, setPlaylist]
+  );
+
+  const getSongs = useCallback(async () => {
+    return (await getPlaylist())?.entries;
+  }, [getPlaylist]);
+
+  useEffect(() => {
+    globalSocket.emit("getPlaylist", playlistID, (playlist: Playlist) => {
+      setPlaylist(playlist);
+    });
+  }, [playlistID, setPlaylist]);
+
+  return {
+    playlistName: playlist?.name,
+    setPlaylistName,
+    songs: playlist?.entries || noEntries,
+    setSongs: setSongs,
+    getSongs,
+  };
+}
+
 export default function usePlaylist(
   audio: PlaylistAudio,
+  playlistID: string,
   uploadFile: (file: File) => Promise<string>
 ): PlaylistProps {
   const [playingID, setPlayingID, getPlayingID] = useStateWithCallback<
     string | null
   >(null);
-  const [playlistName, setPlaylistName] = useState("New Playlist");
+  const {
+    playlistName,
+    setPlaylistName,
+    songs,
+    setSongs,
+    getSongs,
+  } = useNetworkPlaylist(playlistID);
   const [loading, setLoading] = useState(0);
-  const [songs, setSongs, getSongs] = useStateWithCallback<ISong[]>([]);
 
   async function appendFiles(songs: File[]) {
     setLoading((loading) => loading + songs.length);
@@ -34,7 +112,7 @@ export default function usePlaylist(
     setSongs((oldSongs) => [
       ...oldSongs,
       ...namesAndIDsAfterUpload.map(({ fileName, soundID }) => ({
-        songID: soundID,
+        soundID,
         name: fileName.split(".")[0],
       })),
     ]);
@@ -42,9 +120,9 @@ export default function usePlaylist(
   }
 
   function deleteSong(index: number) {
-    if (playingID === songs[index].songID) {
-      audio.stopBuffer(songs[index].songID);
-      console.log("stop", songs[index].songID);
+    if (playingID === songs[index].soundID) {
+      audio.stopBuffer(songs[index].soundID);
+      console.log("stop", songs[index].soundID);
       setPlayingID(null);
     }
     setSongs((oldSongs) => {
@@ -71,16 +149,16 @@ export default function usePlaylist(
 
       // Here, we know that the track has finished organically.
       const playlist = await getSongs();
-      const thisSongIndex = playlist.findIndex(
-        (track) => track.songID === currentlyPlaying
+      const thisSongIndex = playlist?.findIndex(
+        (track) => track.soundID === currentlyPlaying
       );
 
       // If it's the end, don't queue another song.
-      if (thisSongIndex >= playlist.length - 1) {
+      if (!playlist || !thisSongIndex || thisSongIndex >= playlist.length - 1) {
         setPlayingID(null);
       } else {
         setTimeout(() => {
-          playSong(playlist[thisSongIndex + 1].songID);
+          playSong(playlist[thisSongIndex + 1].soundID);
         }, 0);
       }
     });
@@ -114,7 +192,7 @@ export default function usePlaylist(
     deleteSong,
     appendFiles,
     loading: !!loading,
-    playlistName,
+    playlistName: playlistName || "",
     setPlaylistName,
   };
 }

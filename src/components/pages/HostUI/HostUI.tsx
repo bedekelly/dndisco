@@ -17,6 +17,7 @@ import useSubscribe from "../../../subscriptions/useSubscribe";
 import { filter, Observable } from "rxjs";
 import usePads from "../../organisms/Pads/usePads";
 import Playlist from "../../organisms/Playlist/Playlist";
+import Playlists from "../../organisms/Playlists/Playlists";
 
 type HostUIProps = {
   params: {
@@ -84,8 +85,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
         <button onClick={() => setPads((oldPads) => [...oldPads, makePad()])}>
           + Pad
         </button> */}
-        <Playlist audio={audio} uploadFile={uploadFile} stop$={stopAll$} />
-        <Playlist audio={audio} uploadFile={uploadFile} stop$={stopAll$} />
+        <Playlists audio={audio} uploadFile={uploadFile} stopAll$={stopAll$} />
       </ScreenCenter>
       <CopyableLink sessionID={sessionID} />
       <StopEverything onClick={stopEverything} />

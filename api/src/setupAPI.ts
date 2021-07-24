@@ -1,7 +1,7 @@
 import express, { Express } from "express";
 import { v4 as uuid } from "uuid";
 import fs from "fs-extra";
-import sessions, { getSession } from "./sessions";
+import { getSession } from "./sessions";
 import { randomUUID } from "crypto";
 
 export default function setupAPI(

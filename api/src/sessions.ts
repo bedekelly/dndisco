@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { performance } from "perf_hooks";
 import { Socket } from "socket.io";
+import { Playlist } from "./playlists";
 
 type SessionID = string;
 type SoundID = string;
@@ -27,6 +28,7 @@ export type Session = {
   sessionID: string;
   durations: Record<SoundID, number>;
   playing: Record<SoundID, number>;
+  playlists: Record<string, Playlist>;
   pads: Pad[];
 };
 
@@ -45,6 +47,7 @@ function makeSession(sessionID: string): Session {
     playing: {},
     pads: [],
     sessionID,
+    playlists: {},
   };
 }
 

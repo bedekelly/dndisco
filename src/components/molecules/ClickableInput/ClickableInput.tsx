@@ -1,17 +1,10 @@
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const MAX_LENGTH = 30;
 
 type ControlledComponent<T> = {
   value: T;
-  setValue: Dispatch<SetStateAction<T>>;
+  setValue: (newValue: T) => void;
 };
 
 function useCopyState<T>(value: T) {

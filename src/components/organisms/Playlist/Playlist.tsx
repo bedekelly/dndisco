@@ -4,8 +4,8 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { BigPlay, Plus, BigStop } from "../../atoms/Icons";
 import TextLoader from "../../atoms/TextLoader";
-import Song, { ISong } from "../../molecules/Song";
-import usePlaylist, { PlaylistAudio } from "./usePlaylist";
+import Song from "../../molecules/Song";
+import usePlaylist, { PlaylistAudio, PlaylistEntry } from "./usePlaylist";
 import { StopAllMessage } from "../../../network/messages";
 import { Observable } from "rxjs";
 import useSubscribe from "../../../subscriptions/useSubscribe";
@@ -13,8 +13,10 @@ import ClickableInput from "../../molecules/ClickableInput/ClickableInput";
 
 export type PlaylistProps = {
   playingID: string | null;
-  songs: ISong[];
-  setSongs: Dispatch<SetStateAction<ISong[]>>;
+  songs: PlaylistEntry[];
+  setSongs: (
+    getNewSongs: (newSongs: PlaylistEntry[]) => PlaylistEntry[]
+  ) => void;
   appendFiles: (newSongs: File[]) => void;
   deleteSong: (index: number) => void;
   playSong: (songID: string) => void;
@@ -22,7 +24,7 @@ export type PlaylistProps = {
   stopPlaylist: () => void;
   loading: boolean;
   playlistName: string;
-  setPlaylistName: Dispatch<SetStateAction<string>>;
+  setPlaylistName: (newName: string) => void;
 };
 
 function reorder<T>(list: T[], startIndex: number, endIndex: number) {
@@ -36,10 +38,12 @@ export default function Playlist({
   audio,
   uploadFile,
   stop$,
+  id,
 }: {
   audio: PlaylistAudio;
   uploadFile: any;
   stop$: Observable<StopAllMessage>;
+  id: string;
 }) {
   const {
     appendFiles,
@@ -53,7 +57,7 @@ export default function Playlist({
     loading,
     playlistName,
     setPlaylistName,
-  } = usePlaylist(audio, uploadFile);
+  } = usePlaylist(audio, id, uploadFile);
   const songList = useRef<HTMLDivElement | null>(null);
   useSubscribe(stop$, stopPlaylist);
 
@@ -76,7 +80,9 @@ export default function Playlist({
     if (result.destination.index === result.source.index) {
       return;
     }
-    setSongs(reorder(songs, result.source.index, result.destination.index));
+    setSongs((oldSongs) =>
+      reorder(oldSongs, result.source.index, result.destination.index)
+    );
   }
 
   return (
@@ -92,7 +98,7 @@ export default function Playlist({
         {!!songs.length && (
           <button
             onClick={() =>
-              playingID ? stopSong(playingID) : playSong(songs[0].songID)
+              playingID ? stopSong(playingID) : playSong(songs[0].soundID)
             }
           >
             {playingID ? <BigStop /> : <BigPlay />}
@@ -107,11 +113,11 @@ export default function Playlist({
           <Droppable droppableId="playlist-todo-changeme">
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps}>
-                {songs.map(({ name, songID }, songIndex) => (
+                {songs.map(({ name, soundID }, songIndex) => (
                   <Draggable
-                    draggableId={songID}
+                    draggableId={soundID}
                     index={songIndex}
-                    key={songID}
+                    key={soundID}
                   >
                     {(provided) => (
                       <div
@@ -120,11 +126,11 @@ export default function Playlist({
                         {...provided.dragHandleProps}
                       >
                         <Song
-                          key={songID}
+                          key={soundID}
                           title={name}
-                          playing={songID === playingID}
-                          playSong={() => playSong(songID)}
-                          stopSong={() => stopSong(songID)}
+                          playing={soundID === playingID}
+                          playSong={() => playSong(soundID)}
+                          stopSong={() => stopSong(soundID)}
                           deleteSong={() => deleteSong(songIndex)}
                         />
                       </div>
