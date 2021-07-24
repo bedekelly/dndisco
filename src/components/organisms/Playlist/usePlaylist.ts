@@ -175,7 +175,11 @@ export default function usePlaylist(
       console.log(serverOffset + (end - start));
       console.log({ soundID });
 
-      playSong(soundID, serverOffset + loadingOffset + (end - start), false);
+      playSong(
+        soundID,
+        serverOffset + loadingOffset + (end - start) / 1000,
+        false
+      );
     },
     // Todo: playSong is in the dependency array but it's not hoisted.
     // eslint-disable-next-line
@@ -206,17 +210,25 @@ export default function usePlaylist(
     setLoading((loading) => loading + songs.length);
     const namesAndIDsAfterUpload = await Promise.all(
       songs.map(async (song) => {
-        const soundID = await uploadFile(song);
-        return audio.loadBufferFromFile(song, soundID);
+        try {
+          const soundID = await uploadFile(song);
+          return audio.loadBufferFromFile(song, soundID);
+        } catch (e) {
+          console.warn(e.target.error);
+          console.warn(e);
+          return null;
+        }
       })
     );
 
     setSongs((oldSongs) => [
       ...oldSongs,
-      ...namesAndIDsAfterUpload.map(({ fileName, soundID }) => ({
-        soundID,
-        name: fileName.split(".")[0],
-      })),
+      ...namesAndIDsAfterUpload
+        .filter((x): x is BufferLoadedInfo => x != null)
+        .map(({ fileName, soundID }) => ({
+          soundID,
+          name: fileName.split(".")[0],
+        })),
     ]);
     setLoading((loading) => loading - songs.length);
   }

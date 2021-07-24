@@ -16,7 +16,8 @@ function loadAsDataURL(file: File): Promise<string> {
 function getDurationFromURL(url: string) {
   const audioElement = document.createElement("audio");
   audioElement.src = url;
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    audioElement.onerror = (error) => reject(error);
     audioElement.onloadedmetadata = () => resolve(audioElement.duration * 1000);
   });
 }
