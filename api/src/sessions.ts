@@ -73,3 +73,9 @@ export function getPlayingSounds(session: Session) {
     (timestamp) => performance.now() - timestamp
   );
 }
+
+export function getPadSounds(session: Session) {
+  return session.files.filter((file) =>
+    session.pads.some((pad) => pad.soundID === file)
+  );
+}

@@ -17,9 +17,9 @@ export type AudioControls = {
     buffer: ArrayBuffer
   ) => Promise<AudioBuffer | undefined>;
   stopBuffer: (soundID: string) => void;
-  getVisualizerData?: (oldArray?: Uint8Array | undefined) => Uint8Array;
+  getVisualizerData: (oldArray?: Uint8Array | undefined) => Uint8Array;
   getLoadedSounds: any;
-  loadBufferFromFile?: (
+  loadBufferFromFile: (
     soundFile: File,
     soundID: string
   ) => Promise<BufferLoadedInfo>;

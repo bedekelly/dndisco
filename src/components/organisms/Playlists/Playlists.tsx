@@ -1,9 +1,9 @@
 import React from "react";
 import { Observable } from "rxjs/internal/Observable";
+import { AudioControls } from "../../../audio/useBuffers";
 import { StopAllMessage } from "../../../network/messages";
 import TextLoader from "../../atoms/TextLoader";
 import Playlist from "../Playlist/Playlist";
-import { PlaylistAudio } from "../Playlist/usePlaylist";
 import usePlaylists from "./usePlaylists";
 
 function Playlists({
@@ -11,7 +11,7 @@ function Playlists({
   uploadFile,
   stopAll$,
 }: {
-  audio: PlaylistAudio;
+  audio: AudioControls;
   uploadFile: any;
   stopAll$: Observable<StopAllMessage>;
 }) {

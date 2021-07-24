@@ -10,6 +10,7 @@ import { StopAllMessage } from "../../../network/messages";
 import { Observable } from "rxjs";
 import useSubscribe from "../../../subscriptions/useSubscribe";
 import ClickableInput from "../../molecules/ClickableInput/ClickableInput";
+import { AudioControls } from "../../../audio/useBuffers";
 
 export type PlaylistProps = {
   playingID: string | null;
@@ -40,7 +41,7 @@ export default function Playlist({
   stop$,
   id,
 }: {
-  audio: PlaylistAudio;
+  audio: AudioControls;
   uploadFile: any;
   stop$: Observable<StopAllMessage>;
   id: string;
@@ -126,6 +127,7 @@ export default function Playlist({
                         {...provided.dragHandleProps}
                       >
                         <Song
+                          disabled={loading}
                           key={soundID}
                           title={name}
                           playing={soundID === playingID}

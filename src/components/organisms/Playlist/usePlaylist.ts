@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { BufferLoadedInfo } from "../../../audio/useBuffers";
+import { AudioControls, BufferLoadedInfo } from "../../../audio/useBuffers";
 import globalSocket from "../../../network/globalSocket";
+import useLoadSounds from "../../../network/useLoadSounds";
 import useStateWithCallback from "../../../state/useStateWithCallback";
+import useSubject from "../../../subscriptions/useSubject";
 import { ISong } from "../../molecules/Song";
 import { PlaylistProps } from "./Playlist";
 
@@ -84,7 +86,7 @@ function useNetworkPlaylist(playlistID: string) {
 }
 
 export default function usePlaylist(
-  audio: PlaylistAudio,
+  audio: AudioControls,
   playlistID: string,
   uploadFile: (file: File) => Promise<string>
 ): PlaylistProps {
@@ -99,6 +101,14 @@ export default function usePlaylist(
     getSongs,
   } = useNetworkPlaylist(playlistID);
   const [loading, setLoading] = useState(0);
+
+  const loadSounds = useLoadSounds(audio);
+  useEffect(() => {
+    setLoading((count) => count + 1);
+    loadSounds(songs.map((entry) => entry.soundID)).then(() => {
+      setLoading((count) => count - 1);
+    });
+  }, [loadSounds, songs]);
 
   async function appendFiles(songs: File[]) {
     setLoading((loading) => loading + songs.length);
@@ -149,16 +159,21 @@ export default function usePlaylist(
 
       // Here, we know that the track has finished organically.
       const playlist = await getSongs();
+      console.log({ playlist });
       const thisSongIndex = playlist?.findIndex(
         (track) => track.soundID === currentlyPlaying
       );
 
-      // If it's the end, don't queue another song.
-      if (!playlist || !thisSongIndex || thisSongIndex >= playlist.length - 1) {
+      if (
+        !playlist || // Playlist doesn't exist (somehow?)
+        thisSongIndex == null || // Can't find this song any more (somehow?)
+        thisSongIndex >= playlist.length - 1 // Song is at the end of the playlist.
+      ) {
         setPlayingID(null);
       } else {
         setTimeout(() => {
-          playSong(playlist[thisSongIndex + 1].soundID);
+          const nextSong = playlist[thisSongIndex + 1].soundID;
+          playSong(nextSong);
         }, 0);
       }
     });

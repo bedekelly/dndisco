@@ -1,7 +1,7 @@
 import { Server as HTTPServer } from "http";
 import { performance } from "perf_hooks";
 import { Server as SocketServer, Socket } from "socket.io";
-import { getPlayingSounds, getSession, Pad } from "./sessions";
+import { getPadSounds, getPlayingSounds, getSession, Pad } from "./sessions";
 import { isSubsetOf } from "./utils";
 import { randomUUID } from "crypto";
 import { makePlaylist, Playlist } from "./playlists";
@@ -43,7 +43,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
     socketServer
       .to(sessionID)
       .except(session.host)
-      .emit("filesUpdate", session.files, getPlayingSounds(session));
+      .emit("filesUpdate", getPadSounds(session), getPlayingSounds(session));
   }
 
   function updateClientsAndHost(sessionID: string) {
@@ -61,7 +61,11 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         socket.join(sessionID);
         const session = getSession(sessionID);
         session.host = socket.id;
-        socket.emit("filesUpdate", session.files, getPlayingSounds(session));
+        socket.emit(
+          "filesUpdate",
+          getPadSounds(session),
+          getPlayingSounds(session)
+        );
         socket.emit("padsUpdate", session.pads);
         console.log("replied with", session.files);
       } else if (role === "guest") {
@@ -69,7 +73,11 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         socket.sessionID = sessionID;
         socket.join(sessionID);
         const session = getSession(sessionID);
-        socket.emit("filesUpdate", session.files, getPlayingSounds(session));
+        socket.emit(
+          "filesUpdate",
+          getPadSounds(session),
+          getPlayingSounds(session)
+        );
         console.log("replied with", session.files);
       } else {
         console.warn("Role should be either 'host' or 'guest', was " + role);
@@ -81,7 +89,11 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       console.log(`${socket.id} loaded files ${files}`);
       updateHost(socket.sessionID);
       const session = getSession(socket.sessionID);
-      socket.emit("filesUpdate", session.files, getPlayingSounds(session));
+      socket.emit(
+        "filesUpdate",
+        getPadSounds(session),
+        getPlayingSounds(session)
+      );
     });
 
     socket.on("disconnect", () => {
