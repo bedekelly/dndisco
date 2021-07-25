@@ -11,11 +11,9 @@ export default async function onFilesUpdate(
   firstTime: boolean
 ) {
   // Decode and load each new audio file into a buffer.
-  console.log("filesUpdate", soundIDs, playing);
   const loadSoundsStartTime = performance.now();
   const loadedSounds = new Set(audio.getLoadedSounds());
   const soundsToLoad = soundIDs.filter((soundID) => !loadedSounds.has(soundID));
-  console.log({ soundsToLoad });
 
   if (soundsToLoad.length) {
     const allSounds = await produceMap(soundsToLoad, fetchSound);
@@ -39,7 +37,6 @@ export default async function onFilesUpdate(
     (serverOffset) => serverOffset / 1000 + offset
   );
 
-  console.log({ adjustedPlaying });
   Object.entries(adjustedPlaying).forEach(([soundID, offset]) => {
     audio.playBufferAtOffset(soundID, offset);
   });

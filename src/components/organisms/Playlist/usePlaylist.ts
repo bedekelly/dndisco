@@ -145,18 +145,19 @@ export default function usePlaylist(
 
       let { offset: serverOffset, soundID } = playlist.currentlyPlaying;
       serverOffset = (serverOffset || 0) / 1000; // Todo: shouldn't ever happen.
+      let totalOffset = serverOffset + loadingOffset;
 
       let playlistFinished = false;
 
-      console.log({ serverOffset });
-
-      while (serverOffset >= audio.durations[soundID]) {
+      // Todo: do we ever need to take this loop's duration into account?
+      // Seems like a very unlikely edge case but *possible*.
+      while (totalOffset >= audio.durations[soundID]) {
         console.log({
-          serverOffset,
+          totalOffset,
           currentIDDuration: audio.durations[soundID],
           soundID,
         });
-        serverOffset -= audio.durations[soundID];
+        totalOffset -= audio.durations[soundID];
         // Sure, we're "defining a function inside a loop", but it's invoked immediately.
         // eslint-disable-next-line
         let soundIndex = songs.findIndex((song) => song.soundID === soundID);
@@ -167,19 +168,18 @@ export default function usePlaylist(
         soundID = songs[soundIndex + 1].soundID;
       }
 
-      console.log({ serverOffset });
+      console.log({
+        totalOffset,
+        currentIDDuration: audio.durations[soundID],
+      });
 
       if (playlistFinished) return;
-      const end = performance.now();
 
-      console.log(serverOffset + (end - start));
+      const end = performance.now();
+      console.log(totalOffset + (end - start) / 1000);
       console.log({ soundID });
 
-      playSong(
-        soundID,
-        serverOffset + loadingOffset + (end - start) / 1000,
-        false
-      );
+      playSong(soundID, totalOffset + (end - start) / 1000, false);
     },
     // Todo: playSong is in the dependency array but it's not hoisted.
     // eslint-disable-next-line
