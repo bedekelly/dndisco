@@ -6,7 +6,7 @@ import globalSocket from "./globalSocket";
 type PlaylistID = string;
 type NetworkState = "loaded" | "loading" | "disconnected";
 
-function useClientPlaylists(audio: AudioControls) {
+function useGuestPlaylists(audio: AudioControls) {
   const [loadingCount, setLoadingCount] = useState(0);
   const [playlists, setPlaylists] = useState<PlaylistID[]>([]);
 
@@ -14,9 +14,8 @@ function useClientPlaylists(audio: AudioControls) {
    * Loads the list of playlist IDs from the server.
    */
   const loadPlaylists = useCallback(() => {
-    setLoadingCount((count) => {
-      return count + 1;
-    });
+    setLoadingCount((count) => count + 1);
+
     globalSocket.emit("getPlaylists", (playlists: PlaylistID[]) => {
       setLoadingCount((count) => count - 1);
       return setPlaylists(playlists);
@@ -35,7 +34,7 @@ export default function useNetworkSound(
     "disconnected"
   );
 
-  const { loadPlaylists } = useClientPlaylists(audio);
+  const { loadPlaylists } = useGuestPlaylists(audio);
 
   useEffect(() => {
     globalSocket.connect();
