@@ -1,9 +1,30 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import onFilesUpdate from "../audio/onFilesUpdate";
 import { AudioControls } from "../audio/useBuffers";
 import globalSocket from "./globalSocket";
 
+type PlaylistID = string;
 type NetworkState = "loaded" | "loading" | "disconnected";
+
+function useClientPlaylists(audio: AudioControls) {
+  const [loadingCount, setLoadingCount] = useState(0);
+  const [playlists, setPlaylists] = useState<PlaylistID[]>([]);
+
+  /**
+   * Loads the list of playlist IDs from the server.
+   */
+  const loadPlaylists = useCallback(() => {
+    setLoadingCount((count) => {
+      return count + 1;
+    });
+    globalSocket.emit("getPlaylists", (playlists: PlaylistID[]) => {
+      setLoadingCount((count) => count - 1);
+      return setPlaylists(playlists);
+    });
+  }, []);
+
+  return { playlists, loadPlaylists, loading: loadingCount !== 0 };
+}
 
 export default function useNetworkSound(
   audio: AudioControls,
@@ -13,6 +34,8 @@ export default function useNetworkSound(
   const [networkState, setNetworkState] = useState<NetworkState>(
     "disconnected"
   );
+
+  const { loadPlaylists } = useClientPlaylists(audio);
 
   useEffect(() => {
     globalSocket.connect();
@@ -32,6 +55,7 @@ export default function useNetworkSound(
         onFilesUpdate(audio, files, playing, firstLoad.current).then(() => {
           firstLoad.current = false;
           setNetworkState("loaded");
+          loadPlaylists();
         });
       }
     );

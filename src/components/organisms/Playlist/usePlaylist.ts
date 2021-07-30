@@ -5,13 +5,6 @@ import useLoadSounds from "../../../network/useLoadSounds";
 import useStateWithCallback from "../../../state/useStateWithCallback";
 import { PlaylistProps } from "./Playlist";
 
-export type PlaylistAudio = {
-  playBuffer(songID: string): Promise<void>;
-  stopBuffer(songID: string): void;
-  loadBufferFromFile(song: File, soundID: string): Promise<BufferLoadedInfo>;
-  onCompleted(songID: string): Promise<unknown>;
-};
-
 type SoundID = string;
 
 export type PlaylistEntry = {

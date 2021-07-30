@@ -143,6 +143,8 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
     socket.on("getPlaylists", (cb: (playlists: string[]) => void) => {
       const session = socket.sessionID && getSession(socket.sessionID);
+      console.log("sessionID", socket.sessionID);
+      console.log("session", session);
       if (!session) return;
       cb(Object.keys(session.playlists));
     });
