@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioControls, BufferLoadedInfo } from "../../../audio/useBuffers";
 import globalSocket from "../../../network/globalSocket";
 import useLoadSounds from "../../../network/useLoadSounds";
@@ -176,6 +176,7 @@ export default function usePlaylist(
    */
   const [loading, setLoading] = useState(0);
   const loadSounds = useLoadSounds(audio);
+
   useEffect(() => {
     const startTime = performance.now();
     setLoading((count) => count + 1);
@@ -186,7 +187,8 @@ export default function usePlaylist(
       .then(() => {
         startPlaying((performance.now() - startTime) / 1000);
       });
-  }, [loadSounds, songs, startPlaying]);
+    // eslint-disable-next-line
+  }, [loadSounds, startPlaying]);
 
   /**
    * Add an array of files to the playlist.
