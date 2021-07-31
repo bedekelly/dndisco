@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PlaylistAudio, { LoadingTriggers } from "../audio/GuestPlaylistAudio";
 import onFilesUpdate from "../audio/onFilesUpdate";
 import { AudioControls } from "../audio/useBuffers";
-import useStateWithCallback from "../state/useStateWithCallback";
 import globalSocket from "./globalSocket";
 
 type PlaylistID = string;
@@ -58,7 +57,6 @@ function usePlaylistsAudio(
           );
         } else {
           // Update the existing playlist data.
-          console.log("new playlist data", playlistData);
           currentPlaylistAudio.playlistData = playlistData;
           currentPlaylistAudio.updatePlaylistData(loadingCallbacks);
         }
