@@ -209,7 +209,7 @@ export default function usePlaylist(
           const soundID = await uploadFile(song);
           return audio.loadBufferFromFile(song, soundID);
         } catch (e) {
-          console.warn(e.target.error);
+          console.warn(e.target?.error);
           console.warn(e);
           return null;
         }

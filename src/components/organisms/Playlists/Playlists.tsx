@@ -31,7 +31,6 @@ function Playlists({
           audio={audio}
           expanded={expanded === id}
           toggleExpanded={() => {
-            console.log(expanded);
             setExpanded((oldID) => (id === oldID ? null : id));
           }}
           uploadFile={uploadFile}
