@@ -47,7 +47,7 @@ function usePlaylistsAudio(
    * Stop playing audio when this is cleaned up.
    */
   useEffect(() => {
-    const thisAudio = audio.current;
+    const thisAudio = playlistsAudio.current;
     return function cleanUp() {
       Object.values(thisAudio).forEach((playlistAudio) =>
         playlistAudio.cleanUp()
@@ -167,7 +167,6 @@ export default function useNetworkSound(
     globalSocket.on(
       "whoAreYou",
       (replyWith: (sessionID: string, role: "host" | "guest") => void) => {
-        setNetworkState("loaded");
         replyWith(sessionID, "guest");
       }
     );
@@ -175,7 +174,6 @@ export default function useNetworkSound(
     globalSocket.on(
       "filesUpdate",
       (files: string[], playing: Record<string, number>) => {
-        setNetworkState("loading");
         onFilesUpdate(audio, files, playing, firstLoad.current).then(() => {
           firstLoad.current = false;
           setNetworkState("loaded");

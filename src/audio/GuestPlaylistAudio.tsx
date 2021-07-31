@@ -146,7 +146,6 @@ export default class PlaylistAudio {
   }
 
   async cleanUp() {
-    console.log("cleanup????");
     this.stop();
   }
 }
