@@ -181,7 +181,12 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
         if (newData.currentlyPlaying && startOfSong) {
           newData.currentlyPlaying.startedAt = performance.now();
+        } else {
+          newData.currentlyPlaying =
+            session.playlists[playlistID].currentlyPlaying;
         }
+
+        console.log("newData", newData);
         session.playlists[playlistID] = newData;
         console.log(newData);
         updateClients(session.sessionID);

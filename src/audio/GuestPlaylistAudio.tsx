@@ -47,19 +47,38 @@ export default class PlaylistAudio {
   }
 
   async updatePlaylistData([onLoading, onLoaded]: LoadingTriggers) {
+    const start = performance.now();
     onLoading();
     const soundIDs = this.playlistData.entries.map((entry) => entry.soundID);
     await loadSounds(soundIDs, this.audio.current);
     onLoaded();
+
+    console.log({ this: this });
+
+    const serverCurrentlyPlaying = this.playlistData.currentlyPlaying?.soundID;
+    const ourCurrentlyPlaying = this.playingID;
+
+    const loadingTimeSeconds = (performance.now() - start) / 1000;
+
+    console.log({ serverCurrentlyPlaying, ourCurrentlyPlaying });
+
+    if (serverCurrentlyPlaying && !ourCurrentlyPlaying) {
+      this.startPlaying(loadingTimeSeconds);
+    }
+
+    if (ourCurrentlyPlaying && !serverCurrentlyPlaying) {
+      this.stop();
+    }
   }
 
-  async stopSong(soundID: SoundID) {
-    console.log("Todo: stop");
+  async stop() {
+    if (this.playingID != null) this.audio.current.stopBuffer(this.playingID);
+    this.playingID = null;
   }
 
   async playSong(songID: string, offset: number = 0) {
     if (this.playingID) {
-      this.stopSong(this.playingID);
+      this.stop();
     }
     this.playingID = songID;
 
@@ -101,7 +120,7 @@ export default class PlaylistAudio {
     if (!playlist || !playlist.currentlyPlaying) return;
 
     let { offset: serverOffset, soundID } = playlist.currentlyPlaying;
-    serverOffset = (serverOffset || 0) / 1000; // Todo: shouldn't ever happen.
+    serverOffset = (serverOffset || 0) / 1000;
     let totalOffset = serverOffset + loadingOffset;
 
     let playlistFinished = false;
@@ -145,5 +164,7 @@ export default class PlaylistAudio {
     this.playSong(soundID, totalOffset + processingOffset);
   }
 
-  async cleanup() {}
+  async cleanup() {
+    this.stop();
+  }
 }

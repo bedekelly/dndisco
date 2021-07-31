@@ -37,7 +37,7 @@ export default function useVisualisedDestination(
     if (!context) return;
     const pan = createPanner(
       context,
-      debugWithPan ? (hostOrGuest === "host" ? -0.5 : 0.5) : 0
+      debugWithPan ? (hostOrGuest === "host" ? -1 : 1) : 0
     );
     const delay = context.createDelay();
     const gain = (gainRef.current = context.createGain());

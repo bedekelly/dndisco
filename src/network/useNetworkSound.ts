@@ -66,6 +66,13 @@ function usePlaylistsAudio(
     }
 
     updatePlaylistsAudio();
+
+    const latestAudio = playlistsAudio.current;
+    return function cleanup() {
+      Object.values(latestAudio).forEach((playlistAudio) =>
+        playlistAudio.cleanup()
+      );
+    };
   }, [audio, loadingCallbacks, playlists]);
 }
 

@@ -79,14 +79,7 @@ function useNetworkPlaylist(playlistID: string) {
     (soundID: string | null, sendUpdate: boolean = true) => {
       setPlaylist((oldPlaylist: Playlist | null) => {
         if (!oldPlaylist) return oldPlaylist;
-        const currentlyPlaying =
-          soundID == null
-            ? null
-            : {
-                soundID,
-                // This field is only useful when *loading* from the server,
-                // since the server uses its own monotonic clock.
-              };
+        const currentlyPlaying = soundID == null ? null : { soundID };
 
         const newPlaylist = {
           ...oldPlaylist,
