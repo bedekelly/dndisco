@@ -2,9 +2,10 @@ export default function StopEverything({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="cursor-pointer absolute bottom-0 w-screen h-10 text-white bg-red-400 text-uppercase flex font-bold items-center justify-center focus:outline-black"
+      className="cursor-pointer text-white bg-red-400 text-uppercase flex 
+      font-bold items-center justify-center focus:outline-black rounded-bl-lg px-6 py-3.5"
     >
-      Stop All
+      Panic!
     </button>
   );
 }

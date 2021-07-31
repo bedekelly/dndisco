@@ -22,7 +22,7 @@ export type Pad = EmptyPad | PopulatedPad;
 
 export type Session = {
   files: SoundID[];
-  host: string | null;
+  hosts: Set<string>;
   clientFiles: Record<string, SoundID[]>;
   sockets: Record<string, Socket>;
   sessionID: string;
@@ -40,7 +40,7 @@ const sessions: Record<SessionID, Session> = {};
 function makeSession(sessionID: string): Session {
   return {
     files: [],
-    host: null,
+    hosts: new Set<string>(),
     sockets: {},
     clientFiles: {},
     durations: {},

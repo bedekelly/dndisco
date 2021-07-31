@@ -5,7 +5,7 @@ type Dimensions = {
   height: number;
 };
 
-function useCanvas() {
+export function useCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
   const [dimensions, setDimensions] = useState<Dimensions>({
@@ -32,7 +32,7 @@ function useCanvas() {
   };
 }
 
-function useAnimationFrame(animationFrameCallback: () => void) {
+export function useAnimationFrame(animationFrameCallback: () => void) {
   const animationFrameRef = useRef<number>();
   const [playing, setPlaying] = useState(true);
   useEffect(() => {
@@ -56,9 +56,10 @@ function useAnimationFrame(animationFrameCallback: () => void) {
 
 type VisualizerProps = {
   getData: (oldArray?: Uint8Array) => Uint8Array;
+  size: "small" | "big";
 };
 
-export default function Visualizer({ getData }: VisualizerProps) {
+export default function Visualizer({ getData, size }: VisualizerProps) {
   const [smooth] = useState(true);
   const dataRef = useRef<Uint8Array | undefined>();
   const { canvasRef, context, width, height } = useCanvas();
@@ -86,9 +87,13 @@ export default function Visualizer({ getData }: VisualizerProps) {
     }
   });
 
+  const sizeStyles = size === "small" ? `w-36 h-10` : "w-64 h-64";
   return (
-    <div className="m-4 bg-blue-300 shadow-2xl w-28 h-28 rounded-2xl">
-      <canvas className="w-28 h-28 bg-gray-400 rounded-2xl" ref={canvasRef} />
+    <div className={`m-4 shadow-2xl ${sizeStyles} rounded-2xl mx-auto mt-16`}>
+      <canvas
+        className={`${sizeStyles} bg-gray-200 rounded-2xl`}
+        ref={canvasRef}
+      />
     </div>
   );
 }

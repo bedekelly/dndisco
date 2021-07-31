@@ -125,7 +125,6 @@ export default function usePlaylist(
 
   const startPlaying = useCallback(
     async function startPlaying(loadingOffset: number) {
-      console.log("hello?");
       const start = performance.now();
       const playlist = await getPlaylist();
       if (!playlist || !playlist.currentlyPlaying) return;

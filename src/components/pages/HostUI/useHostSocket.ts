@@ -20,6 +20,7 @@ export default function useHostSocket(
   const firstLoad = useRef(true);
 
   useEffect(() => {
+    globalSocket.connect();
     globalSocket.on(
       "whoAreYou",
       (replyWith: (sessionID: string, role: "host" | "guest") => void) => {

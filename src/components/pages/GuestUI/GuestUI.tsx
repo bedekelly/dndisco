@@ -25,7 +25,7 @@ export default function GuestUI({ params: { sessionID } }: GuestUIProps) {
       </div>
       <ScreenCenter>
         <div className="flex flex-col items-center">
-          <Visualizer getData={audio.getVisualizerData} />
+          <Visualizer size="big" getData={audio.getVisualizerData} />
           <VolumeSlider
             value={audio.volume}
             setValue={(vol) => audio.setVolume(vol)}

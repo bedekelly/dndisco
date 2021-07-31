@@ -3,7 +3,7 @@ import copy from "copy-to-clipboard";
 export default function CopyableLink({ sessionID }: { sessionID: string }) {
   const linkURL = `${window.location.origin}/guest/${sessionID}`;
   return (
-    <div className="absolute top-0 p-2 w-full text-center text-sm transform transition">
+    <div className="p-2 w-full text-center text-sm transform transition">
       <button
         onClick={() => copy(linkURL)}
         className="inline-flex items-center"

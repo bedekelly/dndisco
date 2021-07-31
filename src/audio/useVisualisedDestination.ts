@@ -26,7 +26,7 @@ function createPanner(context: AudioContext, pan: number) {
  */
 export default function useVisualisedDestination(
   hostOrGuest: "host" | "guest",
-  debugWithPan: boolean = true
+  debugWithPan: boolean = false
 ) {
   const { context } = useAudioContext();
   const analyserRef = useRef<AnalyserNode | null>(null);

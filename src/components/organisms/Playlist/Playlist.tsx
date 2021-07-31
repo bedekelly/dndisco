@@ -40,9 +40,13 @@ export default function Playlist({
   uploadFile,
   stop$,
   id,
+  expanded,
+  toggleExpanded,
 }: {
   audio: AudioControls;
   uploadFile: any;
+  expanded: boolean;
+  toggleExpanded: () => void;
   stop$: Observable<StopAllMessage>;
   id: string;
 }) {
@@ -88,16 +92,25 @@ export default function Playlist({
 
   return (
     <div
-      className="text-gray-800 shadow-md rounded-2xl overflow-hidden bg-gradient-to-br from-yellow-700 to-red-700 m-3"
+      className="text-gray-800 shadow-md rounded-2xl overflow-hidden bg-gradient-to-br from-yellow-700 to-red-700 mb-3"
       {...getRootProps()}
     >
-      <div className="flex justify-between px-3 m-3 text-yellow-50">
-        <h1 className="playlist-title py-2 text-2xl font-semibold w-full mr-2">
-          <ClickableInput value={playlistName} setValue={setPlaylistName} />
+      <div className="flex justify-between px-3 m-3 text-yellow-50 relative">
+        <h1 className="playlist-title py-2 text-2xl font-semibold w-full mr-2 flex items-center">
+          <button
+            className="mr-2 font-bold -mt-1 w-full z-0 absolute text-left"
+            onClick={toggleExpanded}
+          >
+            {expanded ? "–" : "+"}
+          </button>
+          <span className="ml-5 z-10">
+            <ClickableInput value={playlistName} setValue={setPlaylistName} />
+          </span>
           {loading && <TextLoader />}
         </h1>
         {!!songs.length && (
           <button
+            className="z-10"
             onClick={() =>
               playingID ? stopSong(playingID) : playSong(songs[0].soundID)
             }
@@ -107,7 +120,9 @@ export default function Playlist({
         )}
       </div>
       <div
-        className="playlist-songs mx-px mb-px w-64 h-64 sm:w-96 overflow-y-auto rounded-b-2xl"
+        className={`playlist-songs mx-px mb-px h-48 sm:w-full overflow-y-auto rounded-b-2xl ${
+          expanded ? "" : "hidden"
+        }`}
         ref={songList}
       >
         <DragDropContext onDragEnd={onReorderDragEnd}>

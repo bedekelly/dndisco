@@ -10,19 +10,25 @@ export default function NetworkIndicator({
   numberClients: number;
 }) {
   return (
-    <div className="absolute w-full p-4">
-      {connected ? (
-        <p>
-          {numberClients} connected {!synced && "(Syncing...)"}
-        </p>
-      ) : (
-        <p>Connecting...</p>
-      )}
-      <div className="absolute right-4 top-4">
-        <TrafficLightDot
-          color={connected ? (synced ? "green" : "amber") : "red"}
-        />
-      </div>
+    <div className="absolute left-4 top-4 flex items-center">
+      <TrafficLightDot
+        color={connected ? (synced ? "green" : "amber") : "red"}
+      />
+      <span className="ml-2">
+        {connected ? `${numberClients} joined` : "Connecting..."}
+        {/* <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-3.5 w-3.5 inline-block text-gray-400 ml-0.5 pb-0.5"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+            clipRule="evenodd"
+          />
+        </svg> */}
+      </span>
     </div>
   );
 }

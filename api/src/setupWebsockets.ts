@@ -5,6 +5,7 @@ import { getPadSounds, getPlayingSounds, getSession, Pad } from "./sessions";
 import { isSubsetOf } from "./utils";
 import { randomUUID } from "crypto";
 import { makePlaylist, Playlist } from "./playlists";
+import _ from "lodash";
 
 type SocketWithSessionID = Socket & { sessionID?: string };
 
@@ -25,8 +26,8 @@ export default function setupWebsockets(httpServer: HTTPServer) {
    * currently has, as well as the files
    */
   function updateHost(sessionID: string) {
-    const { host, clientFiles, files } = getSession(sessionID);
-    if (!host) return;
+    const { hosts, clientFiles, files } = getSession(sessionID);
+    if (!hosts.size) return;
     const soundsAreSynced = Object.values(clientFiles).every(
       (singleClientFiles) => {
         const result = isSubsetOf(files, singleClientFiles);
@@ -38,7 +39,9 @@ export default function setupWebsockets(httpServer: HTTPServer) {
     );
     const clientsConnected = Object.keys(clientFiles).length;
     console.log({ clientsConnected, soundsAreSynced });
-    socketServer.to(host).emit("isSynced", soundsAreSynced, clientsConnected);
+    socketServer
+      .to([...hosts])
+      .emit("isSynced", soundsAreSynced, clientsConnected);
   }
 
   /**
@@ -47,10 +50,10 @@ export default function setupWebsockets(httpServer: HTTPServer) {
    */
   function updateClients(sessionID: string) {
     const session = getSession(sessionID);
-    if (!session.host) return;
+    if (!session.hosts.size) return;
     socketServer
       .to(sessionID)
-      .except(session.host)
+      .except([...session.hosts])
       .emit("filesUpdate", getPadSounds(session), getPlayingSounds(session));
   }
 
@@ -68,7 +71,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         socket.sessionID = sessionID;
         socket.join(sessionID);
         const session = getSession(sessionID);
-        session.host = socket.id;
+        session.hosts.add(socket.id);
         socket.emit(
           "filesUpdate",
           getPadSounds(session),
@@ -134,9 +137,12 @@ export default function setupWebsockets(httpServer: HTTPServer) {
     socket.on("padUpdate", (pads: Pad[]) => {
       const session = getSession(socket.sessionID || "");
       if (!session) return;
-      console.log({ pads });
-      session.pads = pads;
-      updateClientsAndHost(session.sessionID);
+
+      // Check for equality so we don't loop infinitely.
+      if (!_.isEqual(session.pads, pads)) {
+        session.pads = pads;
+        updateClientsAndHost(session.sessionID);
+      }
     });
 
     socket.on("createPlaylist", (cb: (playlistID: string) => void) => {
@@ -154,8 +160,6 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
     socket.on("getPlaylists", (cb: (playlists: string[]) => void) => {
       const session = socket.sessionID && getSession(socket.sessionID);
-      console.log("sessionID", socket.sessionID);
-      console.log("session", session);
       if (!session) return;
       cb(Object.keys(session.playlists));
     });

@@ -21,10 +21,19 @@ export default function usePlaylists() {
 
   const createPlaylist = useCallback(() => {
     setLoadingCount((count) => count + 1);
-    globalSocket.emit("createPlaylist", (playlistID: PlaylistID) => {
-      setPlaylists((playlists) => [...playlists, playlistID]);
-      setLoadingCount((count) => count - 1);
+    return new Promise<PlaylistID>((resolve) => {
+      globalSocket.emit("createPlaylist", (playlistID: PlaylistID) => {
+        setPlaylists((playlists) => [...playlists, playlistID]);
+        setLoadingCount((count) => count - 1);
+        resolve(playlistID);
+      });
     });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      setLoadingCount(0);
+    };
   }, []);
 
   return { playlists, createPlaylist, loading: loadingCount !== 0 };

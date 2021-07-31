@@ -84,12 +84,13 @@ export default function UploadPad({
 
 const styles = {
   pad:
-    "w-44 h-44 m-4 rounded-2xl bg-gray-200 flex justify-center items-center transition-all duration-100 shadow-md cursor-pointer flex-col relative select-none",
+    "w-36 h-36 sm:w-44 sm:h-44 mr-4 mb-4 rounded-2xl bg-gray-200 flex justify-center items-center transition-all duration-100 shadow-md cursor-pointer flex-col relative select-none",
   playSound:
-    "w-full h-5/6 bg-gradient-to-br from-blue-700 to-purple-800 rounded-t-2xl overflow-hidden absolute top-0 focus:outline-black",
+    "w-full h-5/6 bg-gradient-to-br from-blue-700 to-purple-600 rounded-t-2xl overflow-hidden absolute top-0 focus:outline-black",
   padName:
     "select-none text-center text-pink-50 font-bold text-lg overflow-ellipsis px-2 py-2",
-  uploadSound: "absolute bottom-0.5 border-0 focus:outline-black",
+  uploadSound:
+    "absolute bottom-0.5 border-0 focus:outline-black -mb-0.5 sm:mb-0",
   fullHeight:
     "full-height w-full h-full rounded-2xl bg-gradient-to-br from-blue-700 to-purple-800 font-bold text-lg text-pink-50",
   stop:

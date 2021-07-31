@@ -2,11 +2,9 @@ import React, { useMemo } from "react";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { useBuffers } from "../../../audio/useBuffers";
-import ScreenCenter from "../../atoms/ScreenCenter";
 import Visualizer from "../../molecules/Visualizer/Visualizer";
 
 import useHostSocket from "./useHostSocket";
-import VolumeSlider from "../../molecules/VolumeSlider/VolumeSlider";
 import CopyableLink from "../../molecules/CopyableLink";
 import StopEverything from "../../atoms/StopEverything";
 import useLoadSounds from "../../../network/useLoadSounds";
@@ -21,6 +19,7 @@ import UploadPad from "../../molecules/UploadPad/UploadPad";
 import NetworkIndicator from "../../atoms/NetworkIndicator";
 import globalSocket from "../../../network/globalSocket";
 import useServerStats from "../../../network/useServerStats";
+import FixedWidth from "../../atoms/FixedWidth";
 
 type HostUIProps = {
   params: {
@@ -67,37 +66,48 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
   }
 
   return (
-    <UnlockAudio>
-      <NetworkIndicator
-        connected={globalSocket.connected}
-        synced={isSynced}
-        numberClients={numberClients}
-      />
-      <ScreenCenter>
-        <div>
-          <Visualizer getData={audio.getVisualizerData} />
-          <VolumeSlider
-            value={audio.volume}
-            setValue={(vol) => audio.setVolume(vol)}
-          ></VolumeSlider>
+    <>
+      <UnlockAudio>
+        <NetworkIndicator
+          connected={globalSocket.connected}
+          synced={isSynced}
+          numberClients={numberClients}
+        />
+        <div className="absolute top-0 right-0">
+          <StopEverything onClick={stopEverything} />
         </div>
-        {pads.map((pad, i) => (
-          <UploadPad
-            key={i}
-            play={() => playPad(i)}
-            stop={() => stopPad(i)}
-            onLoadFile={(file) => onLoadFile(i, file)}
-            fileName={pad.filename}
-            loading={pad.loading}
+        <FixedWidth>
+          <Visualizer size="small" getData={audio.getVisualizerData} />
+          <CopyableLink sessionID={sessionID} />
+          <Playlists
+            audio={audio}
+            uploadFile={uploadFile}
+            stopAll$={stopAll$}
           />
-        ))}
-        <button onClick={() => setPads((oldPads) => [...oldPads, makePad()])}>
-          + Pad
-        </button>
-        <Playlists audio={audio} uploadFile={uploadFile} stopAll$={stopAll$} />
-      </ScreenCenter>
-      <CopyableLink sessionID={sessionID} />
-      <StopEverything onClick={stopEverything} />
-    </UnlockAudio>
+          <div className="pads mt-10 flex flex-wrap justify-around">
+            {pads.map((pad, i) => (
+              <UploadPad
+                key={i}
+                play={() => playPad(i)}
+                stop={() => stopPad(i)}
+                onLoadFile={(file) => onLoadFile(i, file)}
+                fileName={pad.filename}
+                loading={pad.loading}
+              />
+            ))}
+            <button
+              className="w-36 h-36 sm:w-44 sm:h-44  mr-4 mb-4 rounded-2xl bg-gradient-to-br from-purple-500 to-red-400 text-white font-bold text-xl leading-tight grid place-items-center"
+              onClick={() => setPads((oldPads) => [...oldPads, makePad()])}
+            >
+              <span className="flex items-center">
+                <span className="text-3xl mr-1.5">+</span>
+                <span className="mt-2">Pad</span>
+              </span>
+            </button>
+          </div>
+          {/* <ScreenCenter></ScreenCenter> */}
+        </FixedWidth>
+      </UnlockAudio>
+    </>
   );
 }

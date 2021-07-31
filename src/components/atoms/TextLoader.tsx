@@ -12,7 +12,7 @@ export default function TextLoader() {
     return () => {
       clearInterval(interval);
     };
-  });
+  }, [dots.length]);
 
   return <span className="absolute">{dots[num]}</span>;
 }

@@ -190,6 +190,7 @@ export default function useNetworkSound(
     globalSocket.on(
       "filesUpdate",
       (files: string[], playing: Record<string, number>) => {
+        console.log({ files });
         onFilesUpdate(audio, files, playing, firstLoad.current).then(() => {
           firstLoad.current = false;
           setNetworkState("loaded");
