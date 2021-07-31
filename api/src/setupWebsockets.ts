@@ -100,14 +100,6 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       const session = getSession(socket.sessionID);
       session.clientFiles[socket.id] = files;
       updateHost(socket.sessionID);
-
-      // Todo: curtail this infinite loop so we catch race conditions.
-      // const session = getSession(socket.sessionID);
-      // socket.emit(
-      //   "filesUpdate",
-      //   getPadSounds(session),
-      //   getPlayingSounds(session)
-      // );
     });
 
     socket.on("disconnect", () => {

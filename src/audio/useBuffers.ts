@@ -29,7 +29,9 @@ export type AudioControls = {
   volume: number;
   setVolume: React.Dispatch<React.SetStateAction<number>>;
   onCompleted: (soundID: string) => Promise<unknown>;
-  loadBuffers: any;
+  loadBuffers: (
+    buffers: Record<string, ArrayBuffer>
+  ) => Promise<(AudioBuffer | undefined)[]>;
   durations: Record<string, number>;
 };
 
