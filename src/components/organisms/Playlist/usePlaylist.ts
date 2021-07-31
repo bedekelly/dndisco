@@ -142,8 +142,6 @@ export default function usePlaylist(
 
       let playlistFinished = false;
 
-      // Todo: do we ever need to take this loop's duration into account?
-      // Seems like a very unlikely edge case but *possible*.
       while (totalOffset >= audio.durations[soundID]) {
         console.log({
           totalOffset,
@@ -168,11 +166,12 @@ export default function usePlaylist(
 
       if (playlistFinished) return;
 
+      console.log("final soundID:", { soundID });
       const end = performance.now();
-      console.log(totalOffset + (end - start) / 1000);
-      console.log({ soundID });
+      const processingOffset = (end - start) / 1000;
+      console.log(totalOffset + processingOffset);
 
-      playSong(soundID, totalOffset + (end - start) / 1000, false);
+      playSong(soundID, totalOffset + processingOffset, false);
     },
     // Todo: playSong is in the dependency array but it's not hoisted.
     // eslint-disable-next-line

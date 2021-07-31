@@ -156,9 +156,11 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         if (!session) return;
         const playlist = session.playlists[playlistID];
         const now = performance.now();
+        if (!playlist) return;
         if (playlist.currentlyPlaying)
           playlist.currentlyPlaying.offset =
             performance.now() - (playlist.currentlyPlaying?.startedAt || now);
+
         cb(playlist);
       }
     );

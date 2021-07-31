@@ -1,26 +1,132 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PlaylistAudio, { LoadingTriggers } from "../audio/GuestPlaylistAudio";
 import onFilesUpdate from "../audio/onFilesUpdate";
 import { AudioControls } from "../audio/useBuffers";
+import useStateWithCallback from "../state/useStateWithCallback";
 import globalSocket from "./globalSocket";
 
 type PlaylistID = string;
+type SoundID = string;
 type NetworkState = "loaded" | "loading" | "disconnected";
+type PlaylistEntry = {
+  soundID: string;
+  name: string;
+};
 
-function useGuestPlaylists(audio: AudioControls) {
+type PlaylistData = {
+  currentlyPlaying: null | {
+    soundID: SoundID;
+    offset: number;
+  };
+  entries: PlaylistEntry[];
+  name: string;
+};
+
+type Playlists = Record<PlaylistID, PlaylistData>;
+
+function useAudioRef(audio: AudioControls) {
+  const audioRef = useRef(audio);
+  useEffect(() => {
+    audioRef.current = audio;
+  }, [audio]);
+  return audioRef;
+}
+
+/**
+ * Given a set of playlist data in `playlists`, which might continuously change,
+ * keep the playing audio up-to-date with what the host is playing.
+ */
+function usePlaylistsAudio(
+  playlists: Playlists,
+  unstableAudio: AudioControls,
+  loadingCallbacks: LoadingTriggers
+) {
+  const audio = useAudioRef(unstableAudio);
+  const playlistsAudio = useRef<Record<PlaylistID, PlaylistAudio>>({});
+
+  useEffect(() => {
+    async function updatePlaylistsAudio() {
+      for (let [playlistID, playlistData] of Object.entries(playlists)) {
+        const currentPlaylistAudio = playlistsAudio.current[playlistID];
+
+        // Create a new PlaylistAudio for every new playlist.
+        if (!currentPlaylistAudio) {
+          playlistsAudio.current[playlistID] = new PlaylistAudio(
+            audio,
+            playlistData,
+            loadingCallbacks
+          );
+        }
+      }
+    }
+
+    updatePlaylistsAudio();
+  }, [audio, playlists]);
+}
+
+/**
+ * Manage the state of all the playlist IDs. Delegate everything else to
+ * `usePlaylistAudio`.
+ */
+function useGuestPlaylists(
+  audio: AudioControls,
+  [onLoading, onLoaded]: LoadingTriggers
+) {
   const [loadingCount, setLoadingCount] = useState(0);
   const [playlists, setPlaylists] = useState<PlaylistID[]>([]);
+
+  const [playlistData, setPlaylistData] = useState<Playlists>({});
+
+  const loadingCallbacks = useMemo<LoadingTriggers>(() => {
+    const onLoading = () => setLoadingCount((oldCount) => oldCount + 1);
+    const onLoaded = () => setLoadingCount((oldCount) => oldCount - 1);
+    return [onLoading, onLoaded];
+  }, []);
+
+  // Update parent loading state.
+  useEffect(() => {
+    if (loadingCount > 0) {
+      onLoading();
+    } else {
+      onLoaded();
+    }
+  }, [loadingCount, onLoaded, onLoading]);
 
   /**
    * Loads the list of playlist IDs from the server.
    */
   const loadPlaylists = useCallback(() => {
     setLoadingCount((count) => count + 1);
-
     globalSocket.emit("getPlaylists", (playlists: PlaylistID[]) => {
       setLoadingCount((count) => count - 1);
       return setPlaylists(playlists);
     });
   }, []);
+
+  /**
+   * Whenever the `playlists` list of playlist IDs changes, update our
+   * stored data about each playlist.
+   */
+  useEffect(() => {
+    if (!playlists.length) return;
+    console.log({ playlists });
+
+    for (let playlist of playlists) {
+      globalSocket.emit(
+        "getPlaylist",
+        playlist,
+        (newPlaylistData: PlaylistData) => {
+          console.log(newPlaylistData);
+          setPlaylistData((oldPlaylistData) => ({
+            ...oldPlaylistData,
+            [playlist]: newPlaylistData,
+          }));
+        }
+      );
+    }
+  }, [playlists]);
+
+  usePlaylistsAudio(playlistData, audio, loadingCallbacks);
 
   return { playlists, loadPlaylists, loading: loadingCount !== 0 };
 }
@@ -34,7 +140,13 @@ export default function useNetworkSound(
     "disconnected"
   );
 
-  const { loadPlaylists } = useGuestPlaylists(audio);
+  const loadingCallbacks = useMemo<LoadingTriggers>(() => {
+    const onLoading = () => setNetworkState("loading");
+    const onLoaded = () => setNetworkState("loaded");
+    return [onLoading, onLoaded];
+  }, []);
+
+  const { loadPlaylists } = useGuestPlaylists(audio, loadingCallbacks);
 
   useEffect(() => {
     globalSocket.connect();
