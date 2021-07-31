@@ -125,6 +125,7 @@ export default function usePlaylist(
 
   const startPlaying = useCallback(
     async function startPlaying(loadingOffset: number) {
+      console.log("hello?");
       const start = performance.now();
       const playlist = await getPlaylist();
       if (!playlist || !playlist.currentlyPlaying) return;
@@ -132,7 +133,11 @@ export default function usePlaylist(
       let { offset: serverOffset, soundID } = playlist.currentlyPlaying;
       serverOffset = (serverOffset || 0) / 1000; // Todo: shouldn't ever happen.
       let totalOffset = serverOffset + loadingOffset;
-
+      const currentSongs = await getSongs();
+      if (!currentSongs) {
+        console.warn("no current songs");
+        return;
+      }
       let playlistFinished = false;
 
       while (totalOffset >= audio.durations[soundID]) {
@@ -142,14 +147,16 @@ export default function usePlaylist(
           soundID,
         });
         totalOffset -= audio.durations[soundID];
-        // Sure, we're "defining a function inside a loop", but it's invoked immediately.
-        // eslint-disable-next-line
-        let soundIndex = songs.findIndex((song) => song.soundID === soundID);
-        if (!songs[soundIndex + 1]) {
+        let soundIndex = currentSongs.findIndex(
+          // Sure, we're "defining a function inside a loop", but it's invoked immediately.
+          // eslint-disable-next-line
+          (song) => song.soundID === soundID
+        );
+        if (!currentSongs[soundIndex + 1]) {
           playlistFinished = true;
           break;
         }
-        soundID = songs[soundIndex + 1].soundID;
+        soundID = currentSongs[soundIndex + 1].soundID;
       }
 
       console.log({
@@ -168,7 +175,7 @@ export default function usePlaylist(
     },
     // Todo: playSong is in the dependency array but it's not hoisted.
     // eslint-disable-next-line
-    [audio.durations, getPlaylist, songs]
+    [audio.durations, getPlaylist, getSongs]
   );
 
   /**
@@ -178,17 +185,19 @@ export default function usePlaylist(
   const loadSounds = useLoadSounds(audio);
 
   useEffect(() => {
+    console.log("loading everything from scratch again");
     const startTime = performance.now();
     setLoading((count) => count + 1);
     loadSounds(songs.map((entry) => entry.soundID))
-      .then(() => {
+      .then((loadedSongs) => {
         setLoading((count) => count - 1);
+        return loadedSongs.length;
       })
-      .then(() => {
-        startPlaying((performance.now() - startTime) / 1000);
+      .then((numberLoadedSongs) => {
+        if (numberLoadedSongs > 0)
+          startPlaying((performance.now() - startTime) / 1000);
       });
-    // eslint-disable-next-line
-  }, [loadSounds, startPlaying]);
+  }, [loadSounds, startPlaying, songs]);
 
   /**
    * Add an array of files to the playlist.
