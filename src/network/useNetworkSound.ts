@@ -182,6 +182,7 @@ export default function useNetworkSound(
     );
 
     globalSocket.on("play", (soundID: string) => {
+      console.log("play", soundID);
       audio.playBuffer(soundID);
     });
     globalSocket.on("stop", (soundID: string) => {

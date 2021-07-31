@@ -88,12 +88,14 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       if (!socket.sessionID) return;
       console.log(`${socket.id} loaded files ${files}`);
       updateHost(socket.sessionID);
-      const session = getSession(socket.sessionID);
-      socket.emit(
-        "filesUpdate",
-        getPadSounds(session),
-        getPlayingSounds(session)
-      );
+
+      // Todo: curtail this infinite loop so we catch race conditions.
+      // const session = getSession(socket.sessionID);
+      // socket.emit(
+      //   "filesUpdate",
+      //   getPadSounds(session),
+      //   getPlayingSounds(session)
+      // );
     });
 
     socket.on("disconnect", () => {
@@ -124,8 +126,9 @@ export default function setupWebsockets(httpServer: HTTPServer) {
     socket.on("padUpdate", (pads: Pad[]) => {
       const session = getSession(socket.sessionID || "");
       if (!session) return;
+      console.log({ pads });
       session.pads = pads;
-      updateHost(session.sessionID);
+      updateClientsAndHost(session.sessionID);
     });
 
     socket.on("createPlaylist", (cb: (playlistID: string) => void) => {
@@ -181,11 +184,9 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
         if (newData.currentlyPlaying && startOfSong) {
           newData.currentlyPlaying.startedAt = performance.now();
-          console.log("1");
         } else if (newData.currentlyPlaying != null) {
           newData.currentlyPlaying =
             session.playlists[playlistID].currentlyPlaying;
-          console.log("2");
         }
 
         console.log("newData", newData);

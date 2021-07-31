@@ -13,7 +13,9 @@ export default async function onFilesUpdate(
   // Decode and load each new audio file into a buffer.
   const loadSoundsStartTime = performance.now();
   const loadedSounds = new Set(audio.getLoadedSounds());
+  console.log({ soundIDs, loadedSounds });
   const soundsToLoad = soundIDs.filter((soundID) => !loadedSounds.has(soundID));
+  console.log({ soundsToLoad });
 
   if (soundsToLoad.length) {
     const allSounds = await produceMap(soundsToLoad, fetchSound);
