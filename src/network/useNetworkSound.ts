@@ -23,6 +23,11 @@ type PlaylistData = {
 
 type Playlists = Record<PlaylistID, PlaylistData>;
 
+/**
+ * Create a ref which updates on every change to the input value.
+ * This is useful to prevent re-runs of useEffect without disabling eslint
+ * rules.
+ */
 function useAudioRef(audio: AudioControls) {
   const audioRef = useRef(audio);
   useEffect(() => {
@@ -49,29 +54,31 @@ function usePlaylistsAudio(
   useEffect(() => {
     const thisAudio = playlistsAudio.current;
     return function cleanUp() {
-      Object.values(thisAudio).forEach((playlistAudio) =>
-        playlistAudio.cleanUp()
-      );
+      Object.values(thisAudio).forEach((playlistAudio) => playlistAudio.stop());
     };
   }, [audio]);
 
+  /**
+   * Update the playlists' audio instances when we get new playlists data.
+   */
   useEffect(() => {
     async function updatePlaylistsAudio() {
       for (let [playlistID, playlistData] of Object.entries(playlists)) {
         const currentPlaylistAudio = playlistsAudio.current[playlistID];
 
-        // Create a new PlaylistAudio for every new playlist.
-        if (!currentPlaylistAudio) {
-          playlistsAudio.current[playlistID] = new PlaylistAudio(
-            audio,
-            playlistData,
-            loadingCallbacks
-          );
-        } else {
+        if (currentPlaylistAudio) {
           // Update the existing playlist data.
           currentPlaylistAudio.playlistData = playlistData;
           currentPlaylistAudio.updatePlaylistData(loadingCallbacks);
+          return;
         }
+
+        // Create a new PlaylistAudio for every new playlist.
+        playlistsAudio.current[playlistID] = new PlaylistAudio(
+          audio,
+          playlistData,
+          loadingCallbacks
+        );
       }
     }
 
@@ -85,20 +92,25 @@ function usePlaylistsAudio(
  */
 function useGuestPlaylists(
   audio: AudioControls,
-  [onLoading, onLoaded]: LoadingTriggers
+  onLoading: CallableFunction,
+  onLoaded: CallableFunction
 ) {
   const [loadingCount, setLoadingCount] = useState(0);
   const [playlists, setPlaylists] = useState<PlaylistID[]>([]);
-
   const [playlistData, setPlaylistData] = useState<Playlists>({});
 
+  /**
+   * This is useful to prevent rerenders.
+   */
   const loadingCallbacks = useMemo<LoadingTriggers>(() => {
     const onLoading = () => setLoadingCount((oldCount) => oldCount + 1);
     const onLoaded = () => setLoadingCount((oldCount) => oldCount - 1);
     return [onLoading, onLoaded];
   }, []);
 
-  // Update parent loading state.
+  /**
+   * Update parent loading state when our loading count changes.
+   */
   useEffect(() => {
     if (loadingCount > 0) {
       onLoading();
@@ -119,12 +131,10 @@ function useGuestPlaylists(
   }, []);
 
   /**
-   * Whenever the `playlists` list of playlist IDs changes, update our
-   * stored data about each playlist.
+   * Whenever the `playlists` list of playlist IDs changes, get data
+   * for each playlist.
    */
   useEffect(() => {
-    if (!playlists.length) return;
-
     for (let playlist of playlists) {
       globalSocket.emit(
         "getPlaylist",
@@ -139,11 +149,17 @@ function useGuestPlaylists(
     }
   }, [playlists]);
 
+  /**
+   * Delegate to another hook to deal with the actual audio for each of these playlists.
+   */
   usePlaylistsAudio(playlistData, audio, loadingCallbacks);
 
   return { playlists, loadPlaylists, loading: loadingCount !== 0 };
 }
 
+/**
+ * Listen to the network and play sounds based on what the server sends.
+ */
 export default function useNetworkSound(
   audio: AudioControls,
   sessionID: string
@@ -153,14 +169,14 @@ export default function useNetworkSound(
     "disconnected"
   );
 
-  const loadingCallbacks = useMemo<LoadingTriggers>(() => {
-    const onLoading = () => setNetworkState("loading");
-    const onLoaded = () => setNetworkState("loaded");
-    return [onLoading, onLoaded];
-  }, []);
+  const onLoading = useCallback(() => setNetworkState("loading"), []);
+  const onLoaded = useCallback(() => setNetworkState("loaded"), []);
 
-  const { loadPlaylists } = useGuestPlaylists(audio, loadingCallbacks);
+  const { loadPlaylists } = useGuestPlaylists(audio, onLoading, onLoaded);
 
+  /**
+   * Attach listeners to the global socket for all the events the server may send.
+   */
   useEffect(() => {
     globalSocket.connect();
 

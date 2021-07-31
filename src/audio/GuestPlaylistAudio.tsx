@@ -18,7 +18,6 @@ type PlaylistData = {
   name: string;
 };
 
-//                   = [onLoading , onLoaded  ];
 export type LoadingTriggers = [() => void, () => void];
 
 export default class PlaylistAudio {
@@ -40,7 +39,8 @@ export default class PlaylistAudio {
       playlistData.entries.map((entry) => entry.soundID),
       audio.current
     ).then(() => {
-      this.startPlaying((performance.now() - startTime) / 1000);
+      const loadingTime = (performance.now() - startTime) / 1000;
+      this.startPlaying(loadingTime);
       onLoaded();
       globalSocket.emit("gotFiles", audio.current.getLoadedSounds());
     });
@@ -145,9 +145,5 @@ export default class PlaylistAudio {
     const processingOffset = (end - start) / 1000;
 
     this.playSong(soundID, totalOffset + processingOffset);
-  }
-
-  async cleanUp() {
-    this.stop();
   }
 }
