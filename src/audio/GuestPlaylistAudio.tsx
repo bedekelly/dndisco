@@ -51,17 +51,16 @@ export default class PlaylistAudio {
     await loadSounds(soundIDs, this.audio.current);
     onLoaded();
 
-    const serverCurrentlyPlaying = this.playlistData.currentlyPlaying?.soundID;
+    const serverCurrentlyPlaying =
+      this.playlistData.currentlyPlaying?.soundID || null;
     const ourCurrentlyPlaying = this.playingID;
 
     const loadingTimeSeconds = (performance.now() - start) / 1000;
 
-    if (serverCurrentlyPlaying && !ourCurrentlyPlaying) {
-      this.startPlaying(loadingTimeSeconds);
-    }
-
     if (ourCurrentlyPlaying && !serverCurrentlyPlaying) {
       this.stop();
+    } else if (serverCurrentlyPlaying !== ourCurrentlyPlaying) {
+      this.startPlaying(loadingTimeSeconds);
     }
   }
 
