@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import UnlockAudio from "../../../audio/UnlockAudio";
 import { useBuffers } from "../../../audio/useBuffers";
@@ -18,6 +18,9 @@ import { filter, Observable } from "rxjs";
 import usePads, { makePad } from "../../organisms/Pads/usePads";
 import Playlists from "../../organisms/Playlists/Playlists";
 import UploadPad from "../../molecules/UploadPad/UploadPad";
+import NetworkIndicator from "../../atoms/NetworkIndicator";
+import globalSocket from "../../../network/globalSocket";
+import useServerStats from "../../../network/useServerStats";
 
 type HostUIProps = {
   params: {
@@ -29,6 +32,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
   const audio = useBuffers("host");
   const loadSounds = useLoadSounds(audio);
   const uploadFile = useUpload(sessionID);
+  const { isSynced, numberClients } = useServerStats();
 
   const messages$ = useSubject<Message>();
   const stopAll$ = useMemo(
@@ -64,6 +68,11 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
 
   return (
     <UnlockAudio>
+      <NetworkIndicator
+        connected={globalSocket.connected}
+        synced={isSynced}
+        numberClients={numberClients}
+      />
       <ScreenCenter>
         <div>
           <Visualizer getData={audio.getVisualizerData} />

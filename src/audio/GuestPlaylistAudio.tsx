@@ -1,4 +1,5 @@
 import { MutableRefObject } from "react";
+import globalSocket from "../network/globalSocket";
 import { loadSounds } from "../network/useLoadSounds";
 import { AudioControls } from "./useBuffers";
 
@@ -41,6 +42,7 @@ export default class PlaylistAudio {
     ).then(() => {
       this.startPlaying((performance.now() - startTime) / 1000);
       onLoaded();
+      globalSocket.emit("gotFiles", audio.current.getLoadedSounds());
     });
   }
 
@@ -50,6 +52,7 @@ export default class PlaylistAudio {
     const soundIDs = this.playlistData.entries.map((entry) => entry.soundID);
     await loadSounds(soundIDs, this.audio.current);
     onLoaded();
+    globalSocket.emit("gotFiles", this.audio.current.getLoadedSounds());
 
     const serverCurrentlyPlaying =
       this.playlistData.currentlyPlaying?.soundID || null;

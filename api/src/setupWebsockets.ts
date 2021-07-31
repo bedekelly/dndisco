@@ -27,10 +27,18 @@ export default function setupWebsockets(httpServer: HTTPServer) {
   function updateHost(sessionID: string) {
     const { host, clientFiles, files } = getSession(sessionID);
     if (!host) return;
-    const isSynced = Object.values(clientFiles).every((singleClientFiles) =>
-      isSubsetOf(files, singleClientFiles)
+    const soundsAreSynced = Object.values(clientFiles).every(
+      (singleClientFiles) => {
+        const result = isSubsetOf(files, singleClientFiles);
+        if (!result) {
+          console.log({ files, singleClientFiles });
+        }
+        return result;
+      }
     );
-    socketServer.to(host).emit("isSynced", isSynced);
+    const clientsConnected = Object.keys(clientFiles).length;
+    console.log({ clientsConnected, soundsAreSynced });
+    socketServer.to(host).emit("isSynced", soundsAreSynced, clientsConnected);
   }
 
   /**
@@ -72,12 +80,15 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         console.log("Got hello from client!", socket.id, sessionID, role);
         socket.sessionID = sessionID;
         socket.join(sessionID);
+
         const session = getSession(sessionID);
+        session.clientFiles[socket.id] = [];
         socket.emit(
           "filesUpdate",
           getPadSounds(session),
           getPlayingSounds(session)
         );
+        updateHost(session.sessionID);
         console.log("replied with", session.files);
       } else {
         console.warn("Role should be either 'host' or 'guest', was " + role);
@@ -86,7 +97,8 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
     socket.on("gotFiles", (files) => {
       if (!socket.sessionID) return;
-      console.log(`${socket.id} loaded files ${files}`);
+      const session = getSession(socket.sessionID);
+      session.clientFiles[socket.id] = files;
       updateHost(socket.sessionID);
 
       // Todo: curtail this infinite loop so we catch race conditions.
@@ -100,6 +112,10 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
     socket.on("disconnect", () => {
       console.log("Disconnected:", socket.sessionID);
+      if (!socket.sessionID) return;
+      const session = getSession(socket.sessionID);
+      delete session.clientFiles[socket.id];
+      updateHost(session.sessionID);
     });
 
     socket.on("play", (soundID: string) => {
