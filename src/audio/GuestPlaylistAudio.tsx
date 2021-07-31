@@ -33,8 +33,6 @@ export default class PlaylistAudio {
     this.audio = audio;
     this.playlistData = playlistData;
 
-    console.log("Created a new playlist audio with ", playlistData);
-
     const startTime = performance.now();
     onLoading();
     loadSounds(
@@ -53,14 +51,10 @@ export default class PlaylistAudio {
     await loadSounds(soundIDs, this.audio.current);
     onLoaded();
 
-    console.log({ this: this });
-
     const serverCurrentlyPlaying = this.playlistData.currentlyPlaying?.soundID;
     const ourCurrentlyPlaying = this.playingID;
 
     const loadingTimeSeconds = (performance.now() - start) / 1000;
-
-    console.log({ serverCurrentlyPlaying, ourCurrentlyPlaying });
 
     if (serverCurrentlyPlaying && !ourCurrentlyPlaying) {
       this.startPlaying(loadingTimeSeconds);
@@ -86,7 +80,6 @@ export default class PlaylistAudio {
     await this.audio.current.playBufferAtOffset(songID, offset);
 
     audio.onCompleted(songID).then(async () => {
-      console.log({ this: this });
       const currentlyPlaying = this.playingID;
 
       // Check if song was manually stopped or another track was chosen.
@@ -127,11 +120,6 @@ export default class PlaylistAudio {
     const audio = this.audio.current;
 
     while (totalOffset >= audio.durations[soundID]) {
-      console.log({
-        totalOffset,
-        currentIDDuration: audio.durations[soundID],
-        soundID,
-      });
       totalOffset -= audio.durations[soundID];
 
       const playlistTracks = this.playlistData.entries;
@@ -149,22 +137,16 @@ export default class PlaylistAudio {
       soundID = playlistTracks[soundIndex + 1].soundID;
     }
 
-    console.log({
-      totalOffset,
-      currentIDDuration: audio.durations[soundID],
-    });
-
     if (playlistFinished) return;
 
-    console.log("final soundID:", { soundID });
     const end = performance.now();
     const processingOffset = (end - start) / 1000;
-    console.log(totalOffset + processingOffset);
 
     this.playSong(soundID, totalOffset + processingOffset);
   }
 
-  async cleanup() {
+  async cleanUp() {
+    console.log("cleanup????");
     this.stop();
   }
 }

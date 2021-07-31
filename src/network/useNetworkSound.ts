@@ -43,6 +43,18 @@ function usePlaylistsAudio(
   const audio = useAudioRef(unstableAudio);
   const playlistsAudio = useRef<Record<PlaylistID, PlaylistAudio>>({});
 
+  /**
+   * Stop playing audio when this is cleaned up.
+   */
+  useEffect(() => {
+    const thisAudio = audio.current;
+    return function cleanUp() {
+      Object.values(thisAudio).forEach((playlistAudio) =>
+        playlistAudio.cleanUp()
+      );
+    };
+  }, [audio]);
+
   useEffect(() => {
     async function updatePlaylistsAudio() {
       for (let [playlistID, playlistData] of Object.entries(playlists)) {
@@ -64,13 +76,6 @@ function usePlaylistsAudio(
     }
 
     updatePlaylistsAudio();
-
-    const latestAudio = playlistsAudio.current;
-    return function cleanup() {
-      Object.values(latestAudio).forEach((playlistAudio) =>
-        playlistAudio.cleanup()
-      );
-    };
   }, [audio, loadingCallbacks, playlists]);
 }
 
@@ -119,14 +124,12 @@ function useGuestPlaylists(
    */
   useEffect(() => {
     if (!playlists.length) return;
-    console.log({ playlists });
 
     for (let playlist of playlists) {
       globalSocket.emit(
         "getPlaylist",
         playlist,
         (newPlaylistData: PlaylistData) => {
-          console.log(newPlaylistData);
           setPlaylistData((oldPlaylistData) => ({
             ...oldPlaylistData,
             [playlist]: newPlaylistData,
@@ -182,7 +185,6 @@ export default function useNetworkSound(
     );
 
     globalSocket.on("play", (soundID: string) => {
-      console.log("play", soundID);
       audio.playBuffer(soundID);
     });
     globalSocket.on("stop", (soundID: string) => {

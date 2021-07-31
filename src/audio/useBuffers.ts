@@ -72,12 +72,10 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
         console.warn({ buffer });
         return;
       }
-      console.log("Loading buffer...");
       return context.decodeAudioData(buffer, (decodedData: AudioBuffer) => {
         const oldBuffers = buffers.current;
         durations.current[soundID] = decodedData.duration;
         buffers.current = { ...oldBuffers, [soundID]: decodedData };
-        console.log("Loaded.");
       });
     },
     [context]
