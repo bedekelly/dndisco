@@ -140,6 +140,13 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
       // Check for equality so we don't loop infinitely.
       if (!_.isEqual(session.pads, pads)) {
+        const oldPadSounds = session.pads.map((pad) => pad.soundID);
+        const newPadSounds = new Set(pads.map((pad) => pad.soundID));
+        oldPadSounds.forEach((oldPadSound) => {
+          if (oldPadSound && !newPadSounds.has(oldPadSound)) {
+            session.files.delete(oldPadSound);
+          }
+        });
         session.pads = pads;
         updateClientsAndHost(session.sessionID);
       }
