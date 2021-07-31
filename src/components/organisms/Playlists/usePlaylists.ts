@@ -20,7 +20,7 @@ function useLoadingCounter() {
     };
   }, []);
 
-  return { count: loadingCount.current, push, pop };
+  return { count: loadingCount, push, pop };
 }
 
 /**
@@ -32,12 +32,13 @@ export default function usePlaylists() {
   const [playlists, setPlaylists] = useState<PlaylistID[]>([]);
 
   useEffect(() => {
-    push();
+    console.log("get playlists");
     globalSocket.emit("getPlaylists", (playlists: PlaylistID[]) => {
-      pop();
+      console.log("got playlists");
+
       return setPlaylists(playlists);
     });
-  }, [pop, push]);
+  }, []);
 
   const createPlaylist = useCallback(() => {
     push();
@@ -50,5 +51,5 @@ export default function usePlaylists() {
     });
   }, [pop, push]);
 
-  return { playlists, createPlaylist, loading: count !== 0 };
+  return { playlists, createPlaylist, loading: count.current !== 0 };
 }

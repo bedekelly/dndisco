@@ -21,7 +21,7 @@ type PopulatedPad = {
 export type Pad = EmptyPad | PopulatedPad;
 
 export type Session = {
-  files: SoundID[];
+  files: Set<SoundID>;
   hosts: Set<string>;
   clientFiles: Record<string, SoundID[]>;
   sockets: Record<string, Socket>;
@@ -39,7 +39,7 @@ const sessions: Record<SessionID, Session> = {};
  */
 function makeSession(sessionID: string): Session {
   return {
-    files: [],
+    files: new Set<SoundID>(),
     hosts: new Set<string>(),
     sockets: {},
     clientFiles: {},
@@ -75,7 +75,7 @@ export function getPlayingSounds(session: Session) {
 }
 
 export function getPadSounds(session: Session) {
-  return session.files.filter((file) =>
+  return [...session.files].filter((file) =>
     session.pads.some((pad) => pad.soundID === file)
   );
 }

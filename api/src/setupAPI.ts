@@ -48,7 +48,7 @@ export default function setupAPI(
 
       fileStream.on("close", async () => {
         // Future implementation: this *must* be synchronous.
-        session.files.push(soundID);
+        session.files.add(soundID);
         updateClientsAndHost(sessionID);
         response.send({ soundID });
         console.log("Completed upload of", filename, "as", soundID);

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import globalSocket from "./globalSocket";
 
 export default function useServerStats() {
-  const [isSynced, setIsSynced] = useState(false);
+  const [isSynced, setIsSynced] = useState(true);
   const [numberClients, setNumberClients] = useState(0);
   useEffect(() => {
     globalSocket.on(

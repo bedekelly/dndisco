@@ -11,10 +11,6 @@ export function makePad() {
   };
 }
 
-function makeInitialPads(): Pad[] {
-  return Array(2).fill(0).map(makePad);
-}
-
 type EmptyPad = {
   soundID: null;
   filename: null;
@@ -44,7 +40,7 @@ export default function usePads(
   loadSounds: (soundIDs: string[]) => Promise<(AudioBuffer | undefined)[]>,
   messages: Subject<Message>
 ) {
-  const [pads, setPads] = useState<Pad[]>(makeInitialPads);
+  const [pads, setPads] = useState<Pad[]>([]);
   const loadedPads = useRef(new Set());
 
   useEffect(() => {

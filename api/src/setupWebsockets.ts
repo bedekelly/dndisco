@@ -30,7 +30,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
     if (!hosts.size) return;
     const soundsAreSynced = Object.values(clientFiles).every(
       (singleClientFiles) => {
-        const result = isSubsetOf(files, singleClientFiles);
+        const result = isSubsetOf([...files], singleClientFiles);
         if (!result) {
           console.log({ files, singleClientFiles });
         }
@@ -160,18 +160,18 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
     socket.on("getPlaylists", (cb: (playlists: string[]) => void) => {
       const session = socket.sessionID && getSession(socket.sessionID);
-      if (!session) return;
+      if (!session) return cb([]);
       cb(Object.keys(session.playlists));
     });
 
     socket.on(
       "getPlaylist",
-      (playlistID: string, cb: (playlist: Playlist) => void) => {
+      (playlistID: string, cb: (playlist: Playlist | null) => void) => {
         const session = getSession(socket.sessionID || "");
-        if (!session) return;
+        if (!session) return cb(null);
         const playlist = session.playlists[playlistID];
         const now = performance.now();
-        if (!playlist) return;
+        if (!playlist) return cb(null);
         if (playlist.currentlyPlaying)
           playlist.currentlyPlaying.offset =
             performance.now() - (playlist.currentlyPlaying?.startedAt || now);
@@ -202,6 +202,15 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         }
 
         console.log("newData", newData);
+        const oldEntries = session.playlists[playlistID].entries;
+        const newEntries = new Set(newData.entries);
+
+        for (let oldEntry of oldEntries) {
+          if (!newEntries.has(oldEntry)) {
+            session.files.delete(oldEntry);
+          }
+        }
+
         session.playlists[playlistID] = newData;
         console.log(newData);
         updateClients(session.sessionID);
