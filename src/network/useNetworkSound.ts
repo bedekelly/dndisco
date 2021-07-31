@@ -56,12 +56,17 @@ function usePlaylistsAudio(
             playlistData,
             loadingCallbacks
           );
+        } else {
+          // Update the existing playlist data.
+          console.log("new playlist data", playlistData);
+          currentPlaylistAudio.playlistData = playlistData;
+          currentPlaylistAudio.updatePlaylistData(loadingCallbacks);
         }
       }
     }
 
     updatePlaylistsAudio();
-  }, [audio, playlists]);
+  }, [audio, loadingCallbacks, playlists]);
 }
 
 /**

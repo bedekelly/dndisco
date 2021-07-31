@@ -46,6 +46,13 @@ export default class PlaylistAudio {
     });
   }
 
+  async updatePlaylistData([onLoading, onLoaded]: LoadingTriggers) {
+    onLoading();
+    const soundIDs = this.playlistData.entries.map((entry) => entry.soundID);
+    await loadSounds(soundIDs, this.audio.current);
+    onLoaded();
+  }
+
   async stopSong(soundID: SoundID) {
     console.log("Todo: stop");
   }
