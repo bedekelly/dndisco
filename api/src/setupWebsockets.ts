@@ -77,6 +77,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
           getPadSounds(session),
           getPlayingSounds(session)
         );
+        socket.emit("playlistsUpdate", Object.keys(session.playlists));
         socket.emit("padsUpdate", session.pads);
         console.log("replied with", session.files);
       } else if (role === "guest") {
@@ -167,7 +168,10 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
     socket.on("getPlaylists", (cb: (playlists: string[]) => void) => {
       const session = socket.sessionID && getSession(socket.sessionID);
-      if (!session) return cb([]);
+      if (!session) {
+        console.warn("Tried to get playlists before a session exists");
+        return cb([]);
+      }
       cb(Object.keys(session.playlists));
     });
 

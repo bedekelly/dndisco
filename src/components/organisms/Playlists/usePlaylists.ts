@@ -33,12 +33,13 @@ export default function usePlaylists() {
 
   useEffect(() => {
     console.log("get playlists");
-    globalSocket.emit("getPlaylists", (playlists: PlaylistID[]) => {
-      console.log("got playlists");
-
+    push();
+    globalSocket.on("playlistsUpdate", (playlists: PlaylistID[]) => {
+      console.log("got playlists", playlists);
+      pop();
       return setPlaylists(playlists);
     });
-  }, []);
+  }, [pop, push]);
 
   const createPlaylist = useCallback(() => {
     push();

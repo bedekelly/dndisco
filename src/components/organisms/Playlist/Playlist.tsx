@@ -105,8 +105,8 @@ export default function Playlist({
           </button>
           <span className="ml-5 z-10">
             <ClickableInput value={playlistName} setValue={setPlaylistName} />
+            {loading && <TextLoader />}
           </span>
-          {loading && <TextLoader />}
         </h1>
         {!!songs.length && (
           <button
