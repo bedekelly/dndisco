@@ -39,6 +39,10 @@ export default function usePlaylists() {
       pop();
       return setPlaylists(playlists);
     });
+
+    return () => {
+      globalSocket.off("playlistsUpdate");
+    };
   }, [pop, push]);
 
   const createPlaylist = useCallback(() => {

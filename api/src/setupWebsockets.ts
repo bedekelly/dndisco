@@ -38,7 +38,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       }
     );
     const clientsConnected = Object.keys(clientFiles).length;
-    console.log({ clientsConnected, soundsAreSynced });
+    console.log({ clientsConnected, soundsAreSynced, hosts });
     socketServer
       .to([...hosts])
       .emit("isSynced", soundsAreSynced, clientsConnected);
@@ -72,6 +72,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         socket.join(sessionID);
         const session = getSession(sessionID);
         session.hosts.add(socket.id);
+        updateHost(sessionID);
         socket.emit(
           "filesUpdate",
           getPadSounds(session),
@@ -110,6 +111,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       console.log("Disconnected:", socket.sessionID);
       if (!socket.sessionID) return;
       const session = getSession(socket.sessionID);
+      session.hosts.delete(socket.id);
       delete session.clientFiles[socket.id];
       updateHost(session.sessionID);
     });

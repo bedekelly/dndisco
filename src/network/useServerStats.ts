@@ -13,6 +13,10 @@ export default function useServerStats() {
         setNumberClients(newNumberClients);
       }
     );
+
+    return () => {
+      globalSocket.off("isSynced");
+    };
   }, []);
 
   return { isSynced, numberClients };
