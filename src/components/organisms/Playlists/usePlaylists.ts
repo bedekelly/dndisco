@@ -36,13 +36,14 @@ export default function usePlaylists() {
   const [playlists, setPlaylists] = useState<PlaylistID[]>([]);
 
   useEffect(() => {
-    globalSocket.on("playlistsUpdate", (playlists: PlaylistID[]) => {
+    globalSocket.emit("getPlaylists", (playlists: PlaylistID[]) => {
+      console.log("Got playlists manually", playlists);
       return setPlaylists(playlists);
     });
-
-    return () => {
-      globalSocket.off("playlistsUpdate");
-    };
+    globalSocket.on("playlistsUpdate", (playlists: PlaylistID[]) => {
+      console.log("Got playlists");
+      return setPlaylists(playlists);
+    });
   }, [clear, pop, push]);
 
   const createPlaylist = useCallback(() => {

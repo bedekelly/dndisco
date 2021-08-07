@@ -32,7 +32,13 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       (singleClientFiles) => {
         const result = isSubsetOf([...files], singleClientFiles);
         if (!result) {
-          console.log({ files, singleClientFiles });
+          console.log("Difference:");
+          for (let file of files) {
+            if (!singleClientFiles.includes(file)) {
+              console.log(file);
+            }
+          }
+          console.log("Done");
         }
         return result;
       }
@@ -225,8 +231,9 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         }
 
         session.playlists[playlistID] = newData;
-        console.log(newData);
-        updateClients(session.sessionID);
+        socketServer
+          .to(session.sessionID)
+          .emit("playlistUpdate", playlistID, newData);
         done?.(session.playlists[playlistID]);
       }
     );

@@ -8,7 +8,6 @@ export default function useServerStats() {
     globalSocket.on(
       "isSynced",
       (newIsSynced: boolean, newNumberClients: number) => {
-        console.log({ isSynced: newIsSynced, numberClients: newNumberClients });
         setIsSynced(newIsSynced);
         setNumberClients(newNumberClients);
       }

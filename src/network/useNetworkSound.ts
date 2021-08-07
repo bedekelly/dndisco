@@ -149,6 +149,22 @@ function useGuestPlaylists(
     }
   }, [playlists]);
 
+  useEffect(() => {
+    globalSocket.on(
+      "playlistUpdate",
+      (playlistID: string, newData: PlaylistData) => {
+        setPlaylistData((oldPlaylistData) => ({
+          ...oldPlaylistData,
+          [playlistID]: newData,
+        }));
+      }
+    );
+
+    return () => {
+      globalSocket.off("playlistUpdate");
+    };
+  }, []);
+
   /**
    * Delegate to another hook to deal with the actual audio for each of these playlists.
    */
