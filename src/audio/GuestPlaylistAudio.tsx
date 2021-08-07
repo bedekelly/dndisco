@@ -48,6 +48,7 @@ export default class PlaylistAudio {
 
   async updatePlaylistData([onLoading, onLoaded]: LoadingTriggers) {
     const start = performance.now();
+    if (!this?.playlistData?.entries) return;
     onLoading();
     const soundIDs = this.playlistData.entries.map((entry) => entry.soundID);
     await loadSounds(soundIDs, this.audio.current);

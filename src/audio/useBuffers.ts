@@ -75,9 +75,8 @@ export function useBuffers(hostOrGuest: "host" | "guest") {
         return;
       }
       return context.decodeAudioData(buffer, (decodedData: AudioBuffer) => {
-        const oldBuffers = buffers.current;
         durations.current[soundID] = decodedData.duration;
-        buffers.current = { ...oldBuffers, [soundID]: decodedData };
+        buffers.current = { ...buffers.current, [soundID]: decodedData };
       });
     },
     [context]

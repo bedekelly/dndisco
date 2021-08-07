@@ -63,14 +63,14 @@ function usePlaylistsAudio(
    */
   useEffect(() => {
     async function updatePlaylistsAudio() {
-      for (let [playlistID, playlistData] of Object.entries(playlists)) {
+      for (const [playlistID, playlistData] of Object.entries(playlists)) {
         const currentPlaylistAudio = playlistsAudio.current[playlistID];
 
         if (currentPlaylistAudio) {
           // Update the existing playlist data.
           currentPlaylistAudio.playlistData = playlistData;
           currentPlaylistAudio.updatePlaylistData(loadingCallbacks);
-          return;
+          continue;
         }
 
         // Create a new PlaylistAudio for every new playlist.
@@ -153,6 +153,7 @@ function useGuestPlaylists(
     globalSocket.on(
       "playlistUpdate",
       (playlistID: string, newData: PlaylistData) => {
+        console.log("Playlist update", { playlistID, newData });
         setPlaylistData((oldPlaylistData) => ({
           ...oldPlaylistData,
           [playlistID]: newData,

@@ -110,6 +110,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       if (!socket.sessionID) return;
       const session = getSession(socket.sessionID);
       session.clientFiles[socket.id] = files;
+      console.log("Got files", files.length, files);
       updateHost(socket.sessionID);
     });
 
