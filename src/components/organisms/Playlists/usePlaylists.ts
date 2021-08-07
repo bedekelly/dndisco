@@ -13,6 +13,10 @@ function useLoadingCounter() {
     loadingCount.current = loadingCount.current + -1;
   }, []);
 
+  const clear = useCallback(() => {
+    loadingCount.current = 0;
+  }, []);
+
   useEffect(() => {
     loadingCount.current = 0;
     return () => {
@@ -20,7 +24,7 @@ function useLoadingCounter() {
     };
   }, []);
 
-  return { count: loadingCount, push, pop };
+  return { count: loadingCount, push, pop, clear };
 }
 
 /**
@@ -28,22 +32,18 @@ function useLoadingCounter() {
  * Returns a callback to create a new playlist.
  */
 export default function usePlaylists() {
-  const { count, push, pop } = useLoadingCounter();
+  const { count, push, pop, clear } = useLoadingCounter();
   const [playlists, setPlaylists] = useState<PlaylistID[]>([]);
 
   useEffect(() => {
-    console.log("get playlists");
-    push();
     globalSocket.on("playlistsUpdate", (playlists: PlaylistID[]) => {
-      console.log("got playlists", playlists);
-      pop();
       return setPlaylists(playlists);
     });
 
     return () => {
       globalSocket.off("playlistsUpdate");
     };
-  }, [pop, push]);
+  }, [clear, pop, push]);
 
   const createPlaylist = useCallback(() => {
     push();
