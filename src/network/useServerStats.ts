@@ -3,8 +3,18 @@ import globalSocket from "./globalSocket";
 
 export default function useServerStats() {
   const [isSynced, setIsSynced] = useState(true);
+  const [isConnected, setIsConnected] = useState(true);
+
   const [numberClients, setNumberClients] = useState(0);
+
   useEffect(() => {
+    globalSocket.on("disconnect", () => {
+      setIsConnected(globalSocket.connected);
+    });
+
+    globalSocket.on("connect", () => {
+      setIsConnected(globalSocket.connected);
+    });
     globalSocket.on(
       "isSynced",
       (newIsSynced: boolean, newNumberClients: number) => {
@@ -15,8 +25,10 @@ export default function useServerStats() {
 
     return () => {
       globalSocket.off("isSynced");
+      globalSocket.off("connect");
+      globalSocket.off("disconnect");
     };
   }, []);
 
-  return { isSynced, numberClients };
+  return { isSynced, isConnected, numberClients };
 }

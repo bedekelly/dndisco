@@ -17,7 +17,6 @@ import usePads, { makePad } from "../../organisms/Pads/usePads";
 import Playlists from "../../organisms/Playlists/Playlists";
 import UploadPad from "../../molecules/UploadPad/UploadPad";
 import NetworkIndicator from "../../atoms/NetworkIndicator";
-import globalSocket from "../../../network/globalSocket";
 import useServerStats from "../../../network/useServerStats";
 import FixedWidth from "../../atoms/FixedWidth";
 
@@ -31,7 +30,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
   const audio = useBuffers("host");
   const loadSounds = useLoadSounds(audio);
   const uploadFile = useUpload(sessionID);
-  const { isSynced, numberClients } = useServerStats();
+  const { isSynced, numberClients, isConnected } = useServerStats();
 
   const messages$ = useSubject<Message>();
   const stopAll$ = useMemo(
@@ -69,7 +68,7 @@ export default function HostUI({ params: { sessionID } }: HostUIProps) {
     <>
       <UnlockAudio>
         <NetworkIndicator
-          connected={globalSocket.connected}
+          connected={isConnected}
           synced={isSynced}
           numberClients={numberClients}
         />
