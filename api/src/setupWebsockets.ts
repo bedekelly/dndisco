@@ -27,6 +27,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
    */
   function updateHost(sessionID: string) {
     const { hosts, clientFiles, files } = getSession(sessionID);
+    console.log("updating host", { hosts });
     if (!hosts.size) return;
     const soundsAreSynced = Object.values(clientFiles).every(
       (singleClientFiles) => {
@@ -43,6 +44,7 @@ export default function setupWebsockets(httpServer: HTTPServer) {
         return result;
       }
     );
+    console.log({ soundsAreSynced });
     const clientsConnected = Object.keys(clientFiles).length;
     console.log({ clientsConnected, soundsAreSynced, hosts });
     socketServer
@@ -70,6 +72,11 @@ export default function setupWebsockets(httpServer: HTTPServer) {
 
   socketServer.on("connection", (socket: SocketWithSessionID) => {
     console.log("Connection from ", socket.id);
+
+    /**
+     * whoAreYou will work for clients or *reconnecting* hosts; it won't work
+     * for first-time-connecting hosts.
+     */
     socket.emit("whoAreYou", (sessionID: string, role: "host" | "guest") => {
       console.log("got whoareyou response", sessionID, role);
       if (role === "host") {
@@ -104,6 +111,26 @@ export default function setupWebsockets(httpServer: HTTPServer) {
       } else {
         console.warn("Role should be either 'host' or 'guest', was " + role);
       }
+    });
+
+    /**
+     * helloFromHost will work for first-time connecting hosts.
+     */
+    socket.on("helloFromHost", (sessionID: string) => {
+      console.log("got hello from host");
+      socket.sessionID = sessionID;
+      socket.join(sessionID);
+      const session = getSession(sessionID);
+      session.hosts.add(socket.id);
+      updateHost(sessionID);
+      socket.emit(
+        "filesUpdate",
+        getPadSounds(session),
+        getPlayingSounds(session)
+      );
+      socket.emit("playlistsUpdate", Object.keys(session.playlists));
+      socket.emit("padsUpdate", session.pads);
+      console.log("replied with", session.files);
     });
 
     socket.on("gotFiles", (files) => {

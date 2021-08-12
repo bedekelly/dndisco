@@ -20,13 +20,10 @@ export default function useHostSocket(
   const firstLoad = useRef(true);
 
   useEffect(() => {
+    console.log("connecting...", sessionID);
     globalSocket.connect();
-    globalSocket.on(
-      "whoAreYou",
-      (replyWith: (sessionID: string, role: "host" | "guest") => void) => {
-        replyWith(sessionID, "host");
-      }
-    );
+    globalSocket.emit("helloFromHost", sessionID);
+
     globalSocket.on(
       "filesUpdate",
       (files: string[], playing: Record<string, number>) => {
